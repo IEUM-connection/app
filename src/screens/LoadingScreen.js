@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Image, StyleSheet, Dimensions } from 'react-native';
-import Test from '../assets/images/로딩이미지.png';
+import Test from '../assets/images/loading.png';
 
 const LoadingScreen = () => {
     return (

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, TextInput, StyleSheet, TouchableOpacity, Text, Image, Dimensions } from 'react-native';
-import Test from '../assets/images/로딩이미지.png';
+import Test from '../assets/images/loading.png';
 
 const { width: windowWidth, height: windowHeight } = Dimensions.get('window');
 
