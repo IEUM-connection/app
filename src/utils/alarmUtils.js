@@ -1,17 +1,17 @@
 // alarmUtils.js
 
 import PushNotification from 'react-native-push-notification';
-import { Alert, Linking, Platform, PushNotificationIOS } from 'react-native';
+import { Alert, Platform, PushNotificationIOS } from 'react-native';
 import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 import { NativeModules } from 'react-native';
 
-const { AlarmPermissionModule } = NativeModules;
+const { AlarmPermissionModule } = NativeModules; // 네이티브 모듈 사용
 
 // 정확한 알람 권한 확인 함수
 export const checkExactAlarmPermission = async () => {
     if (Platform.OS === 'android' && Platform.Version >= 31) {
         try {
-            const hasPermission = await AlarmPermissionModule.checkAlarmPermission();
+            const hasPermission = await AlarmPermissionModule.checkAlarmPermission(); // 네이티브 모듈에서 권한 확인
             console.log('Exact alarm permission:', hasPermission);
             return hasPermission;
         } catch (error) {
@@ -23,17 +23,27 @@ export const checkExactAlarmPermission = async () => {
     }
 };
 
-// 정확한 알람 권한 요청 함수 (경고창 표시 후 설정 화면으로 이동)
+// 정확한 알람 권한 요청 함수 (네이티브 모듈 사용 + 경고창 표시)
 export const requestExactAlarmPermission = async () => {
     if (Platform.OS === 'android' && Platform.Version >= 31) {
         const hasPermission = await checkExactAlarmPermission();
         if (!hasPermission) {
+            // 경고창 표시
             Alert.alert(
                 '정확한 알람 권한 필요',
                 '정확한 알람 기능을 사용하려면 권한이 필요합니다. 설정 화면으로 이동하시겠습니까?',
                 [
                     { text: '취소', style: 'cancel' },
-                    { text: '설정으로 이동', onPress: () => AlarmPermissionModule.requestAlarmPermission() },
+                    {
+                        text: '설정으로 이동',
+                        onPress: () => {
+                            try {
+                                AlarmPermissionModule.requestAlarmPermission(); // 네이티브 모듈로 설정 화면으로 이동
+                            } catch (error) {
+                                console.error('Error redirecting to alarm settings:', error);
+                            }
+                        }
+                    },
                 ],
                 { cancelable: true }
             );
@@ -82,38 +92,35 @@ const showPermissionAlert = (permissionType) => {
 };
 
 // PushNotification 초기화 및 권한 설정
-export const initializePushNotifications = async () => {
+export const initializePushNotifications = () => {
     console.log('Initializing Push Notifications...');
 
-    const permission = await requestNotificationPermission();
-    if (permission) {
-        PushNotification.createChannel(
-            {
-                channelId: "medication-channel",
-                channelName: "Medication Alerts",
-                importance: PushNotification.Importance.HIGH,
-                vibrate: true,
-            },
-            (created) => console.log(`createChannel returned '${created}'`)
-        );
+    PushNotification.createChannel(
+        {
+            channelId: "medication-channel",
+            channelName: "Medication Alerts",
+            importance: PushNotification.Importance.HIGH,
+            vibrate: true,
+        },
+        (created) => console.log(`createChannel returned '${created}'`)
+    );
 
-        PushNotification.configure({
-            onRegister: function (token) {
-                console.log("TOKEN:", token);
-            },
-            onNotification: function (notification) {
-                console.log('NOTIFICATION:', notification);
-                if (Platform.OS === 'ios') {
-                    notification.finish(PushNotificationIOS.FetchResult.NoData);
-                }
-            },
-            permissions: {
-                alert: true,
-                badge: true,
-                sound: true,
-            },
-            popInitialNotification: true,
-            requestPermissions: Platform.OS === 'ios',
-        });
-    }
+    PushNotification.configure({
+        onRegister: function (token) {
+            console.log("TOKEN:", token);
+        },
+        onNotification: function (notification) {
+            console.log('NOTIFICATION:', notification);
+            if (Platform.OS === 'ios') {
+                notification.finish(PushNotificationIOS.FetchResult.NoData);
+            }
+        },
+        permissions: {
+            alert: true,
+            badge: true,
+            sound: true,
+        },
+        popInitialNotification: true,
+        requestPermissions: Platform.OS === 'ios',
+    });
 };
