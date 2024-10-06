@@ -38,7 +38,7 @@ const MainScreen = ({ navigation }) => {
                     <Text style={styles.userName}>{userName}</Text>
                     <Text style={styles.userNameSuffix}>님과의</Text>
                 </View>
-                <Image source={require('../assets/images/이음아이콘.png')} style={styles.icon} />
+                <Image source={require('../assets/images/appIcon.png')} style={styles.icon} />
             </View>
 
             {/* 보호자 및 담당자 정보 */}
