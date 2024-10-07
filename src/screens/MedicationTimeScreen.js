@@ -37,18 +37,18 @@ const MedicationTimeScreen = ({ navigation, route }) => {
         console.log('Test notification sent immediately');
 
         // 실제 예약 알람
-        alarm.days.forEach(day => {
+        alarm.days.forEach((day) => {
             const dayIndex = daysOfWeek.indexOf(day);
             if (dayIndex !== -1) {
                 const now = new Date();
                 let alarmTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, minute);
-
+    
                 if (dayIndex > now.getDay() || (dayIndex === now.getDay() && alarmTime > now)) {
                     alarmTime.setDate(now.getDate() + (dayIndex - now.getDay()));
                 } else {
                     alarmTime.setDate(now.getDate() + (7 + dayIndex - now.getDay()));
                 }
-
+    
                 PushNotification.localNotificationSchedule({
                     channelId: "medication-channel",
                     message: `${alarm.timing} 투약 시간입니다`,
@@ -58,6 +58,7 @@ const MedicationTimeScreen = ({ navigation, route }) => {
                     allowWhileIdle: true,
                     importance: "high",
                     priority: "high",
+                    id: alarm.id.toString(), // 알람 ID 추가
                 });
                 console.log(`Alarm scheduled for ${alarm.timing} at ${alarmTime.toLocaleString()} (${day})`);
             }
@@ -102,10 +103,22 @@ const MedicationTimeScreen = ({ navigation, route }) => {
             const loadAlarms = async () => {
                 const loadedAlarms = await loadAlarmsFromStorage();
                 setAlarms(loadedAlarms);
-                loadedAlarms.forEach(scheduleAlarm);
+                
+                // 이미 예약된 알람을 재등록하지 않도록 수정
+                loadedAlarms.forEach((alarm) => {
+                    PushNotification.getScheduledLocalNotifications((notifications) => {
+                        const alarmExists = notifications.some(
+                            (notification) => notification.id === alarm.id.toString()
+                        );
+                        if (!alarmExists) {
+                            scheduleAlarm(alarm);
+                        }
+                    });
+                });
             };
+    
             loadAlarms();
-
+    
             if (route.params?.newAlarm) {
                 addAlarm(route.params.newAlarm);
                 navigation.setParams({ newAlarm: undefined });
@@ -133,14 +146,14 @@ const MedicationTimeScreen = ({ navigation, route }) => {
                 </View>
             </View>
             {alarms.length === 0 ? (
-                <View style={styles.noAlarmContent}>
+                <View style={[styles.noAlarmContent, styles.shadowProp]}>
                     <Text style={styles.noAlarmText}>등록된 투약알림이 없습니다.</Text>
                     <Text style={styles.noAlarmText}>투약알림을 등록해주세요.</Text>
                 </View>
             ) : (
                 <ScrollView style={styles.alarmsScrollView}>
                     {alarms.map((alarm) => (
-                        <View key={alarm.id} style={styles.alarmContent}>
+                        <View key={alarm.id} style={[styles.alarmContent, styles.shadowProp]}>
                             <View style={styles.alarmInfo}>
                                 <Text style={styles.alarmTitle}>내 투약 시간</Text>
                                 <Text style={styles.alarmInfoText}>
@@ -176,7 +189,7 @@ const MedicationTimeScreen = ({ navigation, route }) => {
                 <TouchableOpacity
                     style={[styles.Button, styles.shadowProp]}
                     onPress={navigateToAddMedicationTime}>
-                    <Text style={styles.ButtonText}>등록하기</Text>
+                    <Text style={styles.ButtonText}>등록</Text>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => navigation.navigate('Main')}
                                   style={[styles.Button, styles.shadowProp]}>
@@ -200,11 +213,11 @@ const styles = StyleSheet.create({
         paddingRight: 30,
         paddingLeft: 30,
         borderRadius: 10,
-        width: '100%',
-        height: 80,
+        width: '86%',
+        height: 70,
         alignSelf: 'center',
         marginBottom: 15,
-        marginTop: 60,
+        marginTop: 50,
     },
     headerContent: {
         flexDirection: 'row',
@@ -215,48 +228,48 @@ const styles = StyleSheet.create({
     headerText: {
         color: '#464646',
         fontWeight: 'bold',
-        fontSize: 20,
+        fontSize: 22,
     },
     noAlarmContent: {
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#B4B0B0',
-        width: 300,
-        height: 300,
+        backgroundColor: '#C9C9C9',
+        width: 320,
+        height: 320,
         borderRadius: 10,
-        margin: 60,
-        marginBottom: 110,
+        margin: 70,
+        marginBottom: 117,
     },
     noAlarmText: {
-        fontSize: 20,
+        fontSize: 22,
         color: '#ffffff',
         marginBottom: 20,
         fontWeight: 'bold',
     },
     alarmsScrollView: {
-        width: 300,
+        width: 320,
         height: '60%',
         borderRadius: 10,
     },
     alarmContent: {
-        backgroundColor: '#F9F9F9',
+        backgroundColor: '#F2F2F2',
         padding: 15,
         borderRadius: 10,
-        marginBottom: 20,
+        marginBottom: 30,
     },
     alarmTitle: {
         alignSelf: 'center',
-        fontSize: 30,
+        fontSize: 28,
         fontWeight: 'bold',
-        marginBottom: 10,
+        marginBottom: 28,
     },
     alarmInfo: {
         padding: 15,
         borderRadius: 10,
     },
     alarmInfoText: {
-        fontSize: 20,
-        marginBottom: 15,
+        fontSize: 25,
+        marginBottom: 10,
     },
     redBoldText: {
         color: '#CA4C4C',
@@ -290,11 +303,11 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         padding: 10,
-        width: 170,
-        height: 170,
+        width: 154,
+        height: 114,
         backgroundColor: '#FCBAAA',
         borderRadius: 10,
-        marginBottom: 10
+        marginBottom: 50
     },
     editButton: {
         justifyContent: 'center',
@@ -302,12 +315,13 @@ const styles = StyleSheet.create({
         padding: 10,
         borderRadius: 5,
         marginRight: 5,
-        width: '48%',
-        height: 60,
+        width: '46%',
+        height: 70,
+        marginBottom: 16,
     },
     ButtonText: {
         color: '#ffffff',
-        fontSize: 25,
+        fontSize: 28,
         fontWeight: 'bold',
     },
     removeButton: {
@@ -315,14 +329,16 @@ const styles = StyleSheet.create({
         backgroundColor: '#FF6B6B',
         padding: 10,
         borderRadius: 5,
-        width: '48%',
+        width: '46%',
         marginLeft: 5,
-        height: 60,
+        height: 70,
     },
     buttonText: {
         color: '#fff',
         textAlign: 'center',
         fontWeight: 'bold',
+        fontSize: 22,
+        marginBottom: 5,
     },
 });
 

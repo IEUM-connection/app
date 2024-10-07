@@ -1,11 +1,25 @@
-import React from 'react';
-import { View, Image, StyleSheet, Dimensions } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import { View, Animated, StyleSheet, Dimensions, Easing } from 'react-native';
 import Test from '../assets/images/loading.png';
 
 const LoadingScreen = () => {
+    const fadeAnim = useRef(new Animated.Value(0)).current; // 애니메이션 값 초기화
+
+    useEffect(() => {
+        Animated.timing(fadeAnim, {
+            toValue: 1,
+            duration: 2000, // 4초 동안 애니메이션 지속
+            easing: Easing.linear, // 애니메이션의 속도를 균등하게 설정
+            useNativeDriver: false,
+        }).start();
+    }, [fadeAnim]);
+
     return (
         <View style={styles.container}>
-            <Image source={Test} style={styles.image} />
+            <Animated.Image 
+                source={Test} 
+                style={[styles.image, { opacity: fadeAnim }]} // 애니메이션 스타일 적용
+            />
         </View>
     );
 };

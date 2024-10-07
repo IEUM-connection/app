@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet, SafeAreaView, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, Image, StyleSheet, SafeAreaView, Platform, Dimensions } from 'react-native';
 import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
 import FontAwesomeIcons from 'react-native-vector-icons/FontAwesome';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import HelpRequestModal from '../components/HelpRequestModal'; // 추가
+
+const { width: windowWidth, height: windowHeight } = Dimensions.get('window');
 
 const MainScreen = ({ navigation }) => {
     const [modalVisible, setModalVisible] = useState(false);
     const userName = "고세동"; // 임시 데이터
     const guardianName = "윤영하"; // 임시 데이터
     const adminName = "역삼2동 최고민수 주무관"; // 임시 데이터
-    const alarmCount = 100; // 임시 알람 수 데이터
+    const alarmCount = 41; // 임시 알람 수 데이터
 
     const handleHelpRequest = () => {
         setModalVisible(false);
@@ -23,7 +25,7 @@ const MainScreen = ({ navigation }) => {
             {/* 헤더 영역 */}
             <View style={styles.header}>
                 <TouchableOpacity style={styles.notificationButton} onPress={() => navigation.navigate('AlarmList')}>
-                    <SimpleLineIcons name="bell" size={35} color={'#777777'} />
+                    <Image source={require('../assets/images/bell-grey.png')} style={styles.bellIcon} />
                     {alarmCount > 0 && (
                         <View style={styles.badge}>
                             <Text style={styles.badgeText}>{alarmCount > 99 ? '99+' : alarmCount}</Text>
@@ -57,7 +59,7 @@ const MainScreen = ({ navigation }) => {
                         <View style={styles.helpButtonTopRow}>
                             <View style={styles.helpButtonTextContainer}>
                                 <Text style={styles.buttonText}>도움요청</Text>
-                                <FontAwesomeIcons name="hand-paper-o" size={80} color={'#ffffff'} style={{ marginTop: 10 }} />
+                                <FontAwesomeIcons name="hand-paper-o" size={90} color={'#ffffff'} style={{ marginTop: 10 }} />
                             </View>
                         </View>
                         <View style={styles.helpButtonBottomRow}>
@@ -83,7 +85,7 @@ const MainScreen = ({ navigation }) => {
                             <Text style={styles.buttonText2}>시간 알람</Text>
                         </View>
                         <View style={styles.buttonIcon}>
-                            <MaterialCommunityIcons name="pill" size={50} color={'#00722E'} />
+                            <MaterialCommunityIcons name="pill" size={60} color={'#00722E'} />
                         </View>
                     </View>
                 </TouchableOpacity>
@@ -93,8 +95,8 @@ const MainScreen = ({ navigation }) => {
                             <Text style={styles.buttonText2}>근처</Text>
                             <Text style={styles.buttonText2}>병원/약국</Text>
                         </View>
-                        <View style={[styles.buttonIcon, { margin: -15 }]}>
-                            <MaterialCommunityIcons name="hospital" size={75} color={'#00722E'} />
+                        <View style={[styles.buttonIcon, { margin: -10 }]}>
+                            <MaterialCommunityIcons name="hospital" size={90} color={'#00722E'} />
                         </View>
                     </View>
                 </TouchableOpacity>
@@ -105,7 +107,7 @@ const MainScreen = ({ navigation }) => {
                 <TouchableOpacity style={[styles.alarmHistoryButton, styles.shadowProp]} onPress={() => navigation.navigate('AlarmList')}>
                     <View style={styles.alarmHistoryContent}>
                         <Text style={styles.alarmHistoryText}>알림 내역 조회</Text>
-                        <SimpleLineIcons name="bell" size={40} color={'#ffeb00'} />
+                        <Image source={require('../assets/images/bell-yellow.png')} style={styles.bellIcon} />
                     </View>
                 </TouchableOpacity>
             </View>
@@ -123,8 +125,13 @@ const styles = StyleSheet.create({
     },
     header: {
         alignItems: 'flex-end',
-        marginTop: 20,
-        marginBottom: -30,
+        marginTop: 10,
+        marginBottom: -50,
+    },
+    bellIcon: {
+        width: 34,
+        height: 44,
+        resizeMode: 'contain',
     },
     notificationButton: {
         padding: 10,
@@ -136,18 +143,18 @@ const styles = StyleSheet.create({
     badge: {
         position: 'absolute',
         left: 28,
-        top: 2,
+        top: 6,
         backgroundColor: 'red',
-        borderRadius: 9,
-        minWidth: 18,
-        height: 18,
-        paddingHorizontal: 2,
+        borderRadius: 10,
+        minWidth: 20,
+        height: 20,
+        paddingHorizontal: 5,
         justifyContent: 'center',
         alignItems: 'center',
     },
     badgeText: {
         color: 'white',
-        fontSize: 12,
+        fontSize: 14,
         fontWeight: 'bold',
     },
     userInfo: {
@@ -162,7 +169,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     userName: {
-        fontSize: 40,
+        fontSize: 44,
         fontWeight: 'bold',
         color: '#585858',
     },
@@ -173,35 +180,33 @@ const styles = StyleSheet.create({
         color: '#585858',
     },
     icon: {
-        width: 150,
+        width: 140,
         height: 170,
-        marginLeft: -10,
+        marginLeft: -4,
     },
     guardianInfo: {
         backgroundColor: 'white',
         padding: 20,
         borderRadius: 10,
         width: '90%',
-        marginBottom: 15,
+        marginBottom: 20,
         alignSelf: 'center',
     },
     guardianInfoText: {
         color: '#464646',
         fontWeight: 'bold',
-        fontSize: 16,
-        marginLeft: 10,
-        marginBottom: 5,
+        fontSize: 20,
     },
     helpButtonContainer: {
         alignItems: 'center',
-        marginBottom: 15,
+        marginBottom: 20,
     },
     helpButton: {
         backgroundColor: '#FCBAAA',
-        padding: 15,
+        padding: 6,
         borderRadius: 10,
         width: '90%',
-        height: 210,
+        height: 170,
     },
     helpButtonContent: {
         flex: 1,
@@ -217,14 +222,14 @@ const styles = StyleSheet.create({
     helpButtonTextContainer: {
         flexDirection: 'row',
         alignSelf: 'flex-start',
-        gap: 60,
-        marginTop: 10,
+        gap: 74,
+        marginTop: 20,
     },
     helpButtonBottomRow: {
         flex: 1,
         alignSelf: 'flex-start',
-        marginLeft: 20,
-        marginTop: -20,
+        marginLeft: 15,
+        marginTop: -30,
     },
     rowButtonContainer: {
         flexDirection: 'row',
@@ -237,7 +242,7 @@ const styles = StyleSheet.create({
         padding: 10,
         borderRadius: 10,
         width: 155,
-        height: 155,
+        height: 150,
     },
     buttonContent: {
         flex: 1,
@@ -249,17 +254,17 @@ const styles = StyleSheet.create({
     },
     buttonIcon: {
         alignSelf: 'flex-end',
-        marginTop: 10,
+        marginTop: -14,
     },
     alarmHistoryContainer: {
         alignItems: 'center',
     },
     alarmHistoryButton: {
         backgroundColor: 'white',
-        padding: 15,
+        padding: 20,
         borderRadius: 10,
-        width: '90%',
-        height: 70,
+        width: 332,
+        height: 120,
     },
     alarmHistoryContent: {
         flexDirection: 'row',
@@ -270,7 +275,7 @@ const styles = StyleSheet.create({
     alarmHistoryText: {
         color: '#464646',
         fontWeight: 'bold',
-        fontSize: 20,
+        fontSize: 24,
     },
     buttonText: {
         color: '#ffffff',
@@ -281,12 +286,12 @@ const styles = StyleSheet.create({
     buttonText1: {
         color: '#ffffff',
         fontWeight: 'bold',
-        fontSize: 15,
+        fontSize: 20,
     },
     buttonText2: {
         color: '#464646',
         fontWeight: 'bold',
-        fontSize: 20,
+        fontSize: 23,
         marginLeft: 10,
     },
     shadowProp: {

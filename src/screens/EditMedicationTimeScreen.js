@@ -88,7 +88,7 @@ const EditMedicationTimeScreen = ({ navigation, route }) => {
                 </View>
 
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>투약 요일</Text>
+                    <Text style={styles.sectionTitle1}>투약 요일</Text>
                     <View style={styles.daysContainer}>
                         {days.map((dayPair, index) => (
                             <View key={index} style={styles.dayPairContainer}>
@@ -108,7 +108,7 @@ const EditMedicationTimeScreen = ({ navigation, route }) => {
                     </View>
                 </View>
 
-                <Text style={styles.sectionTitle}>투약 시간</Text>
+                <Text style={styles.sectionTitle2}>투약 시간</Text>
                 <View style={styles.timeContainer}>
                     <Picker
                         selectedValue={hour}
@@ -136,6 +136,9 @@ const EditMedicationTimeScreen = ({ navigation, route }) => {
                 <TouchableOpacity style={styles.button} onPress={saveEditedMedication}>
                     <Text style={styles.buttonText}>저장</Text>
                 </TouchableOpacity>
+                <TouchableOpacity style={styles.button} onPress={() => navigation.goBack()}>
+                    <Text style={styles.buttonText}>취소</Text>
+                </TouchableOpacity>
             </View>
         </ScrollView>
     );
@@ -152,16 +155,16 @@ const styles = StyleSheet.create({
         paddingRight: 30,
         paddingLeft: 30,
         borderRadius: 10,
-        width: '100%',
-        height: 80,
+        width: '86%',
+        height: 70,
         alignSelf: 'center',
         marginBottom: 15,
-        marginTop: 60,
+        marginTop: 50,
     },
     headerText: {
         color: '#464646',
         fontWeight: 'bold',
-        fontSize: 20,
+        fontSize: 22,
     },
     headerContent: {
         flexDirection: 'row',
@@ -174,6 +177,10 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         padding: 20,
         paddingTop: 30,
+        width: 320,
+        justifyContent: 'center',
+        alignItems: 'center',
+        alignSelf: 'center',
         gap: 10,
         ...Platform.select({
             ios: {
@@ -201,15 +208,30 @@ const styles = StyleSheet.create({
         }),
     },
     Title: {
-        fontSize: 30,
+        fontSize: 24,
         fontWeight: 'bold',
         marginBottom: 10,
         alignSelf: 'center',
+        marginTop: -10,
     },
     sectionTitle: {
         fontSize: 20,
         fontWeight: 'bold',
-        marginBottom: 10,
+        marginBottom: 18,
+    },
+    sectionTitle1: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginBottom: 18,
+        marginTop: 22,
+    },
+    sectionTitle2: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        textAlign: 'left',
+        marginBottom: -8,
+        marginTop: -10,
+        marginRight: 166,
     },
     itemContainer: {
         flexDirection: 'row',
@@ -221,7 +243,7 @@ const styles = StyleSheet.create({
     dayPairContainer: {
         flexDirection: 'row',
         justifyContent: 'flex-start',
-        marginBottom: 30,
+        marginBottom: 20,
         gap: 30,
     },
     itemRow: {
@@ -231,8 +253,8 @@ const styles = StyleSheet.create({
         width: 80,
     },
     checkbox: {
-        width: 24,
-        height: 24,
+        width: 34,
+        height: 34,
         borderWidth: 1,
         borderColor: '#ddd',
         justifyContent: 'center',
@@ -244,7 +266,9 @@ const styles = StyleSheet.create({
         borderColor: '#FF9999',
     },
     itemText: {
-        fontSize: 16,
+        fontSize: 20,
+        marginBottom: 5,
+        fontWeight: 'bold',
     },
     timeContainer: {
         flexDirection: 'row',
@@ -256,10 +280,12 @@ const styles = StyleSheet.create({
         height: 50,
     },
     timeColon: {
-        fontSize: 24,
+        fontSize: 20,
         marginHorizontal: 10,
     },
     buttonContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
         padding: 20,
     },
     button: {
@@ -267,15 +293,15 @@ const styles = StyleSheet.create({
         alignSelf: 'center',
         justifyContent: 'center',
         padding: 10,
-        width: 200,
-        height: 100,
+        width: '46%',
+        height: 70,
         backgroundColor: '#FCBAAA',
         borderRadius: 10,
-        marginBottom: 10
+        marginBottom: 10,
     },
     buttonText: {
         color: '#fff',
-        fontSize: 25,
+        fontSize: 26,
         fontWeight: 'bold',
     },
 });
