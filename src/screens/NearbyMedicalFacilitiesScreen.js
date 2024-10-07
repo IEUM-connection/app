@@ -100,7 +100,7 @@ const NearbyMedicalFacilitiesScreen = ({ navigation }) => {
             <View style={[styles.header, styles.shadowProp]}>
                 <View style={styles.headerContent}>
                     <Text style={styles.headerText}>근처 병원 / 약국 조회</Text>
-                    <SimpleLineIcons name="hospital" size={40} color="#00722E" />
+                    <SimpleLineIcons name="hospital" size={60} color="#00722E" style={styles.iconStyle} />
                 </View>
             </View>
             <View style={[styles.listContainer, styles.shadowProp]}>
@@ -138,8 +138,8 @@ const styles = StyleSheet.create({
         alignSelf: 'center',
         padding: 5,
         backgroundColor: '#ffffff',
-        width: '90%',
-        height: '75%',
+        width: '86%',
+        height: '74%',
         borderRadius: 10,
     },
     shadowProp: {
@@ -161,10 +161,10 @@ const styles = StyleSheet.create({
         paddingLeft: 30,
         borderRadius: 10,
         width: '86%',
-        height: 80,
+        height: 70,
         alignSelf: 'center',
         marginBottom: 15,
-        marginTop: 60,
+        marginTop: 50,
     },
     headerContent: {
         flexDirection: 'row',
@@ -175,13 +175,19 @@ const styles = StyleSheet.create({
     headerText: {
         color: '#464646',
         fontWeight: 'bold',
-        fontSize: 20,
+        fontSize: 22,
+        marginBottom: 5,
+    },
+    iconStyle: {
+        marginLeft: 40,
+        marginTop: 1,
+        alignSelf: 'center',
     },
     item: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: 15,
+        padding: 14,
         backgroundColor: '#fff',
         marginVertical: 4,
         borderRadius: 10,
@@ -202,23 +208,24 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     itemName: {
-        fontSize: 16,
+        fontSize: 18,
         fontWeight: 'bold',
         color: '#333',
     },
     itemAddress: {
-        fontSize: 14,
+        fontSize: 16,
         color: '#666',
     },
     distanceText: {
-        fontSize: 14,
+        fontSize: 16,
         color: '#999',
     },
     operationStatus: {
         paddingHorizontal: 10,
         paddingVertical: 5,
-        borderRadius: 15,
-        width: 70,  // 고정 너비 추가
+        borderRadius: 10,
+        width: 80,  // 고정 너비 추가
+        height: 36,
         alignItems: 'center',  // 내부 콘텐츠 중앙 정렬
         justifyContent: 'center',  // 내부 콘텐츠 중앙 정렬
     },
@@ -230,9 +237,10 @@ const styles = StyleSheet.create({
     },
     operationStatusText: {
         color: '#fff',
-        fontSize: 12,
+        fontSize: 16,
         fontWeight: 'bold',
         textAlign: 'center',  // 텍스트 중앙 정렬
+        marginBottom: 3,
     },
     endText: {
         textAlign: 'center',
@@ -245,14 +253,16 @@ const styles = StyleSheet.create({
         marginTop: 10,
         marginBottom: 20,
         padding: 10,
-        width: '50%',
+        width: 200,
+        height: 50,
         backgroundColor: '#FCBAAA',
         borderRadius: 10,
     },
     closeButtonText: {
         color: '#ffffff',
-        fontSize: 17,
+        fontSize: 20,
         fontWeight: 'bold',
+        marginBottom: 5,
     },
 });
 

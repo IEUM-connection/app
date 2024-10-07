@@ -7,6 +7,7 @@ import {
     TouchableOpacity,
     FlatList,
     ActivityIndicator,
+    Image,
 } from 'react-native';
 import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
 
@@ -115,7 +116,7 @@ const AlarmListScreen = ({ navigation }) => {
     const renderItem = ({ item }) => (
         <View style={styles.item}>
             <Text style={styles.itemText}>{item.title}</Text>
-            <Text>{item.message}</Text>
+            <Text style={styles.message}>{item.message}</Text>
         </View>
     );
 
@@ -131,7 +132,7 @@ const AlarmListScreen = ({ navigation }) => {
             <View style={[styles.alarmHistoryButton, styles.shadowProp]}>
                 <View style={styles.alarmHistoryContent}>
                     <Text style={styles.alarmHistoryText}>알림 내역 조회</Text>
-                    <SimpleLineIcons name="bell" size={40} color="#F1CA00" />
+                    <Image source={require('../assets/images/bell-yellow.png')} style={styles.bellIcon} />
                 </View>
             </View>
             <View style={[styles.test, styles.shadowProp]}>
@@ -146,7 +147,7 @@ const AlarmListScreen = ({ navigation }) => {
                         isLoading ? (
                             <ActivityIndicator size="large" color="#000" />
                         ) : !hasMoreData ? (
-                            <Text style={styles.endText}>모든 데이터를 불러왔습니다.</Text>
+                            <Text style={styles.endText}>더이상 알림이 없습니다.</Text>
                         ) : null
                     }
                 />
@@ -166,14 +167,18 @@ const styles = StyleSheet.create({
         padding: 10,
         backgroundColor: '#ffffff',
     },
+    bellIcon: {
+        width: 32,
+        resizeMode: 'contain',
+    },
     test: {
         alignItems: 'center',
         justifyContent: 'center',
         alignSelf: 'center',
         padding: 5,
         backgroundColor: '#ffffff',
-        width: '90%', // 크기를 명확하게 설정
-        height: '75%', // 높이도 설정
+        width: '86%', // 크기를 명확하게 설정
+        height: '74%', // 높이도 설정
         borderRadius: 10,
     },
     shadowProp: {
@@ -195,10 +200,10 @@ const styles = StyleSheet.create({
         paddingLeft: 30,
         borderRadius: 10,
         width: '86%',
-        height: 80,
+        height: 70,
         alignSelf: 'center',
         marginBottom: 15,
-        marginTop: 60,
+        marginTop: 50,
     },
     alarmHistoryContent: {
         flexDirection: 'row',
@@ -209,10 +214,10 @@ const styles = StyleSheet.create({
     alarmHistoryText: {
         color: '#464646',
         fontWeight: 'bold',
-        fontSize: 20,
+        fontSize: 22,
     },
     item: {
-        padding: 15,
+        padding: 14,
         backgroundColor: '#fff',
         marginVertical: 1,
         borderRadius: 10,
@@ -221,29 +226,37 @@ const styles = StyleSheet.create({
         borderBottomColor: '#ccc', // 구분선 색상
         width: '100%',
         alignSelf: 'center',
+        fontWeight: 'bold',
+    },
+    message: {
+        fontSize: 16,
+        // fontWeight: 'bold',
     },
     itemText: {
-        fontSize: 16,
+        fontSize: 20,
         color: '#333',
+        marginBottom: 5,
     },
     endText: {
         textAlign: 'center',
-        padding: 10,
-        color: '#888',
+        padding: 16,
+        fontSize: 18,
+        color: '#000000',
     },
     closeButton: {
         alignSelf: 'center',
         alignItems: 'center',
         marginTop: 10,
-        marginBottom: 20,
+        marginBottom: 22,
         padding: 10,
-        width: '50%',
         backgroundColor: '#FCBAAA',
         borderRadius: 10,
+        width: 200,
+        height: 50,
     },
     closeButtonText: {
         color: '#fff',
-        fontSize: 17,
+        fontSize: 20,
         fontWeight: 'bold',
     },
 });
