@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { requestExactAlarmPermission, initializePushNotifications, requestNotificationPermission } from './src/utils/alarmUtils';
+import { setupUsageTracking, stopUsageTracking } from './src/utils/usageTracker';
 
 import LoadingScreen from './src/screens/LoadingScreen';
 import MainScreen from './src/screens/MainScreen';
@@ -30,6 +31,9 @@ const App = () => {
                 // 알림 권한 요청 (Android 13+)
                 await requestNotificationPermission();
 
+                // 사용 시간 추적 설정
+                await setupUsageTracking();
+
                 // 초기 로딩 작업 시뮬레이션
                 await new Promise(resolve => setTimeout(resolve, 2000));
 
@@ -41,6 +45,11 @@ const App = () => {
         };
 
         initializeApp();
+
+        // 컴포넌트 언마운트 시 사용 시간 추적 중지
+        return () => {
+            stopUsageTracking();
+        };
     }, []);
 
     if (isLoading) {
