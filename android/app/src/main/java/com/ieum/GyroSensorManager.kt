@@ -66,7 +66,7 @@ class GyroSensorManager(context: Context) : SensorEventListener {
 
     // 상수 정의를 위한 동반 객체 선언
     companion object {
-        private const val THRESHOLD = 0.01f // 충격 감지 임계값
-        private const val FALL_THRESHOLD = 0.01f // 넘어짐 감지 임계값
+        private const val THRESHOLD = 0.1f // 충격 감지 임계값 조정
+        private const val FALL_THRESHOLD = 0.1f // 넘어짐 감지 임계값 조정
     }
 }
