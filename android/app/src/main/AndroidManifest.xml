@@ -1,20 +1,33 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- 인터넷 접근 권한 -->
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- 진동 사용 권한 -->
     <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!-- 부팅 완료 시 앱 실행 권한 -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <!-- 절전 모드에서 Wake Lock 사용 권한 -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!-- 정확한 알람 설정 권한 -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+
+    <!-- 알림 표시 권한 -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
-     <!-- 센서 접근 권한 추가 -->
+    <!-- 센서 접근 권한 -->
     <uses-permission android:name="android.permission.BODY_SENSORS" />
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
 
-     <!-- Foreground Service를 위한 권한 추가 -->
+    <!-- Foreground Service를 위한 권한 -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
-    
+
+    <!-- 잠금 화면 상태 확인을 위한 권한 -->
+    <uses-permission android:name="android.permission.DISABLE_KEYGUARD"/>
 
     <application
             android:name=".MainApplication"
@@ -63,7 +76,7 @@
             </intent-filter>
         </receiver>
 
-        <!-- PushNotification 서비스 추가 -->
+        <!-- PushNotification 서비스 -->
         <service
                 android:name="com.dieam.reactnativepushnotification.modules.RNPushNotificationListenerService"
                 android:exported="false">
@@ -72,13 +85,11 @@
             </intent-filter>
         </service>
 
-        
         <!-- GyroSensorService 등록 -->
         <service
-        android:name=".GyroSensorService"
-        android:foregroundServiceType="dataSync" 
-        android:exported="false" />
-
+                android:name=".GyroSensorService"
+                android:foregroundServiceType="dataSync"
+                android:exported="false" />
 
     </application>
 </manifest>
