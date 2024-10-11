@@ -29,6 +29,9 @@
     <!-- 잠금 화면 상태 확인을 위한 권한 -->
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD"/>
 
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+
+
     <application
             android:name=".MainApplication"
             android:label="@string/app_name"
@@ -51,6 +54,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+
 
         <!-- 알람 관련 리시버 (알람 스케줄링 및 재부팅 후 복구) -->
         <receiver
@@ -76,6 +81,7 @@
             </intent-filter>
         </receiver>
 
+
         <!-- PushNotification 서비스 -->
         <service
                 android:name="com.dieam.reactnativepushnotification.modules.RNPushNotificationListenerService"
@@ -90,6 +96,30 @@
                 android:name=".GyroSensorService"
                 android:foregroundServiceType="dataSync"
                 android:exported="false" />
+
+          <activity
+            android:name=".AlarmActivity"
+            android:exported="true"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
+            android:launchMode="singleTop">
+        </activity>
+
+        <receiver
+            android:name=".GyroSensorService$StopAlarmReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.choongang.ieum.action.STOP_ALARM" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </receiver>
+
+        <receiver android:name=".StopAlarmReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="com.choongang.ieum.action.STOP_ALARM"/>
+            </intent-filter>
+        </receiver>
+
 
     </application>
 </manifest>
