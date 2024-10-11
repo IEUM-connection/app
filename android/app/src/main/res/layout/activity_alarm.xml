@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- RelativeLayout을 루트 레이아웃으로 사용 -->
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFD8D8"
+    android:padding="16dp"> <!-- 레이아웃 내부 패딩을 16dp로 설정 -->
+
+    <!-- 알람 메시지를 표시하는 TextView -->
+    <TextView
+        android:id="@+id/alarmText" 
+        android:layout_width="wrap_content" 
+        android:layout_height="wrap_content" 
+        android:text="알람이 울리고 있습니다!"
+        android:textColor="@android:color/black" 
+        android:textSize="36sp" 
+        android:layout_marginBottom="80dp"
+        android:layout_centerHorizontal="true" 
+        android:layout_marginTop="300dp"/> 
+
+    <!-- 알람을 중지하는 버튼 -->
+    <Button
+        android:id="@+id/stopButton" 
+        android:layout_width="wrap_content" 
+        android:layout_height="wrap_content" 
+        android:text="알람 끄기" 
+        android:textSize="24sp" 
+        android:layout_below="@id/alarmText" 
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="20dp" 
+        android:padding="16dp" 
+        android:background="@android:color/holo_blue_dark"
+        android:textColor="@android:color/white" /> <!-- 버튼 텍스트 색상을 흰색으로 설정 -->
+
+</RelativeLayout>

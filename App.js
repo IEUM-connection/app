@@ -22,20 +22,18 @@ const App = () => {
     useEffect(() => {
         const initializeApp = async () => {
             try {
-                // 푸시 알림 초기화
-                await initializePushNotifications();
-
-                // 정확한 알람 권한 요청 (Android)
-                await requestExactAlarmPermission();
-
-                // 알림 권한 요청 (Android 13+)
-                await requestNotificationPermission();
-
-                // 사용 시간 추적 설정
-                await setupUsageTracking();
-
                 // 초기 로딩 작업 시뮬레이션
                 await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                // 푸시 알림 초기화
+                await initializePushNotifications();
+                
+                // 권한 요청
+                await requestExactAlarmPermission();
+                await requestNotificationPermission();
+                
+                // 사용 시간 추적 설정
+                await setupUsageTracking();
 
                 setIsLoading(false);
             } catch (error) {
