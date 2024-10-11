@@ -1,4 +1,4 @@
-package com.choongang.ieum // 실제 패키지 이름으로 변경하세요
+package com.meetbti.ieum // 실제 패키지 이름으로 변경하세요
 
 import android.app.AlarmManager
 import android.content.Intent

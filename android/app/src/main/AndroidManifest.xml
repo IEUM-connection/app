@@ -109,14 +109,14 @@
             android:name=".GyroSensorService$StopAlarmReceiver"
             android:exported="false">
             <intent-filter>
-                <action android:name="com.choongang.ieum.action.STOP_ALARM" />
+                <action android:name="com.meetbti.ieum.action.STOP_ALARM" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </receiver>
 
         <receiver android:name=".StopAlarmReceiver" android:exported="true">
             <intent-filter>
-                <action android:name="com.choongang.ieum.action.STOP_ALARM"/>
+                <action android:name="com.meetbti.ieum.action.STOP_ALARM"/>
             </intent-filter>
         </receiver>
 

@@ -84,9 +84,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace "com.choongang.ieum"
+    namespace "com.meetbti.ieum"
     defaultConfig {
-        applicationId "com.choongang.ieum"
+        applicationId "com.meetbti.ieum"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
