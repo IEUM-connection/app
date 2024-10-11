@@ -1,4 +1,4 @@
-package com.ieum
+package com.choongang.ieum
 
 import android.Manifest
 import android.content.Intent
