@@ -37,18 +37,18 @@ const MedicationTimeScreen = ({ navigation, route }) => {
         console.log('Test notification sent immediately');
 
         // 실제 예약 알람
-        alarm.days.forEach((day) => {
+        alarm.days.forEach(day => {
             const dayIndex = daysOfWeek.indexOf(day);
             if (dayIndex !== -1) {
                 const now = new Date();
                 let alarmTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, minute);
-    
+
                 if (dayIndex > now.getDay() || (dayIndex === now.getDay() && alarmTime > now)) {
                     alarmTime.setDate(now.getDate() + (dayIndex - now.getDay()));
                 } else {
                     alarmTime.setDate(now.getDate() + (7 + dayIndex - now.getDay()));
                 }
-    
+
                 PushNotification.localNotificationSchedule({
                     channelId: "medication-channel",
                     message: `${alarm.timing} 투약 시간입니다`,
@@ -58,7 +58,6 @@ const MedicationTimeScreen = ({ navigation, route }) => {
                     allowWhileIdle: true,
                     importance: "high",
                     priority: "high",
-                    id: alarm.id.toString(), // 알람 ID 추가
                 });
                 console.log(`Alarm scheduled for ${alarm.timing} at ${alarmTime.toLocaleString()} (${day})`);
             }
@@ -103,22 +102,10 @@ const MedicationTimeScreen = ({ navigation, route }) => {
             const loadAlarms = async () => {
                 const loadedAlarms = await loadAlarmsFromStorage();
                 setAlarms(loadedAlarms);
-                
-                // 이미 예약된 알람을 재등록하지 않도록 수정
-                loadedAlarms.forEach((alarm) => {
-                    PushNotification.getScheduledLocalNotifications((notifications) => {
-                        const alarmExists = notifications.some(
-                            (notification) => notification.id === alarm.id.toString()
-                        );
-                        if (!alarmExists) {
-                            scheduleAlarm(alarm);
-                        }
-                    });
-                });
+                loadedAlarms.forEach(scheduleAlarm);
             };
-    
             loadAlarms();
-    
+
             if (route.params?.newAlarm) {
                 addAlarm(route.params.newAlarm);
                 navigation.setParams({ newAlarm: undefined });

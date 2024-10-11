@@ -1,8 +1,7 @@
-package com.ieum
+package com.choongang.ieum
 
-import android.app.*
-import android.content.BroadcastReceiver
-import android.content.Context
+import android.app.Notification
+import android.app.Service
 import android.content.Intent
 import android.content.IntentFilter
 import android.hardware.Sensor
@@ -48,7 +47,7 @@ class GyroSensorService : Service(), SensorEventListener {
             addAction(STOP_ALARM_ACTION)
             addCategory(Intent.CATEGORY_DEFAULT)
         }
-        
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(stopAlarmReceiver, intentFilter, Context.RECEIVER_EXPORTED)
         } else {

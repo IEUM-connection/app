@@ -1,44 +1,95 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, TextInput, StyleSheet, TouchableOpacity, Image, Text, Dimensions, Animated } from 'react-native'; // 여기서 Image를 대문자로 수정
+import { View, TextInput, StyleSheet, TouchableOpacity, Text, Dimensions, Animated, Alert } from 'react-native';
 import Test from '../assets/images/loading.png';
+import messaging from '@react-native-firebase/messaging';
+import axios from 'axios';
+import { REACT_APP_API_KEY } from '@env';
 
 const { width: windowWidth, height: windowHeight } = Dimensions.get('window');
 
 const LoginScreen = ({ navigation }) => {
-    const [username, setUsername] = useState('');
-    const fadeAnim = useRef(new Animated.Value(0)).current; // 애니메이션 값 초기화
-
-    const handleLogin = () => {
-        console.log('로그인한 사용자 인증 번호:', username);
-        navigation.replace('Main');
-    };
+    const [memberCode, setMemberCode] = useState('');
+    const [fcmToken, setFcmToken] = useState(null);
+    const fadeAnim = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
-        // 로고가 나타나는 애니메이션 시작
+        // FCM 토큰 가져오기
+        getFcmToken();
+
+        // 로고 애니메이션
         Animated.timing(fadeAnim, {
-            toValue: 1, // 최종 값
-            duration: 1000, // 애니메이션 지속 시간
-            useNativeDriver: true, // 네이티브 드라이버 사용
+            toValue: 1,
+            duration: 1000,
+            useNativeDriver: true,
         }).start();
     }, [fadeAnim]);
+
+    const getFcmToken = async () => {
+        try {
+            const token = await messaging().getToken();
+            setFcmToken(token);
+        } catch (error) {
+            console.error('FCM 토큰 가져오기 실패:', error);
+        }
+    };
+
+    const handleLogin = async () => {
+        if (memberCode.length !== 6) {
+            Alert.alert('오류', '올바른 6자리 인증번호를 입력해주세요.');
+            return;
+        }
+
+        try {
+            const response = await axios.post(`${REACT_APP_API_KEY}/auth/login`, {
+                memberCode
+            }, {
+                headers: {
+                    'loginType': 'member',
+                },
+            });
+
+            console.log('로그인 성공:', response.data);
+
+            // FCM 토큰 서버로 전송
+            if (fcmToken) {
+                try {
+                    await axios.post(`${REACT_APP_API_KEY}/members/1/fcm-token`, {
+                        fcmToken: fcmToken
+                    }, {
+                        headers: {
+                            'Authorization': `Bearer ${response.data.token}`
+                        }
+                    });
+                    console.log('FCM 토큰 업데이트 성공');
+                } catch (error) {
+                    console.error('FCM 토큰 업데이트 실패:', error);
+                }
+            }
+
+            navigation.replace('Main');
+        } catch (error) {
+            console.error('로그인 실패:', error);
+            Alert.alert('로그인 실패', error.response?.data?.message || '알 수 없는 오류가 발생했습니다.');
+        }
+    };
 
     return (
         <View style={styles.mainContainer}>
             <View style={styles.contentContainer}>
-                <Image 
+                <Animated.Image
                     source={Test}
-                    style={styles.image} // 로고에 애니메이션 적용
+                    style={[styles.image, { opacity: fadeAnim }]}
                 />
                 <View style={styles.inputContainer}>
                     <TextInput
-                        style={styles.input} // 입력 필드의 스타일
-                        placeholder="인증번호 입력" // 입력 필드에 표시되는 텍스트
-                        placeholderTextColor="#9A9A9A" // placeholder의 텍스트 색상
-                        value={username} // 입력값
-                        onChangeText={setUsername} // 입력값이 변경될 때마다 호출
-                        textAlign="center" // 입력 텍스트를 가운데 정렬
-                        keyboardType="numeric" // 키보드 타입을 숫자로 지정
-                        maxLength={6} // 최대 6자리까지 입력 가능
+                        style={styles.input}
+                        placeholder="인증번호 입력"
+                        placeholderTextColor="#9A9A9A"
+                        value={memberCode}
+                        onChangeText={setMemberCode}
+                        textAlign="center"
+                        keyboardType="numeric"
+                        maxLength={6}
                     />
                     <TouchableOpacity
                         style={styles.button}
@@ -63,7 +114,7 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-start',
         alignItems: 'center',
         backgroundColor: 'white',
-        paddingTop: windowHeight * 0.15, // 화면 높이의 15%만큼 상단 패딩을 줍니다.
+        paddingTop: windowHeight * 0.15,
     },
     contentContainer: {
         alignItems: 'center',
@@ -79,7 +130,7 @@ const styles = StyleSheet.create({
         borderColor: '#9A9A9A',
         backgroundColor: '#EEEEEE',
         marginBottom: 12,
-        width: windowWidth - 110, // 화면 너비에서 150을 뺀 만큼의 너비를 가집니다.
+        width: windowWidth - 110,
         borderRadius: 10,
         color: 'black',
         fontSize: 20,
@@ -91,7 +142,7 @@ const styles = StyleSheet.create({
         },
         shadowOpacity: 0.23,
         shadowRadius: 2.62,
-        elevation: 4, // Android에서의 그림자 효과
+        elevation: 4,
     },
     button: {
         height: 70,
@@ -116,9 +167,9 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     image: {
-        width: windowWidth * 0.8, // 화면 너비의 80%
-        height: windowHeight * 0.3, // 화면 높이의 30%
-        resizeMode: 'contain', // 이미지의 비율을 유지하면서 주어진 영역에 맞춥니다.
+        width: windowWidth * 0.8,
+        height: windowHeight * 0.3,
+        resizeMode: 'contain',
     },
     copyrightText: {
         fontSize: 12,
