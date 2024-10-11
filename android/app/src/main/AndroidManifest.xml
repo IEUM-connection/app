@@ -55,7 +55,7 @@
             </intent-filter>
         </activity>
 
-    
+
 
         <!-- 알람 관련 리시버 (알람 스케줄링 및 재부팅 후 복구) -->
         <receiver
@@ -109,14 +109,14 @@
             android:name=".GyroSensorService$StopAlarmReceiver"
             android:exported="false">
             <intent-filter>
-                <action android:name="com.ieum.action.STOP_ALARM" />
+                <action android:name="com.choongang.ieum.action.STOP_ALARM" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </receiver>
 
         <receiver android:name=".StopAlarmReceiver" android:exported="true">
             <intent-filter>
-                <action android:name="com.ieum.action.STOP_ALARM"/>
+                <action android:name="com.choongang.ieum.action.STOP_ALARM"/>
             </intent-filter>
         </receiver>
 

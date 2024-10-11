@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -34,17 +34,9 @@ const App = () => {
                 console.log('FCM Token:', token);
 
                 // 기존 초기화 작업
-                // 초기 로딩 작업 시뮬레이션
-                await new Promise(resolve => setTimeout(resolve, 2000));
-
-                // 푸시 알림 초기화
                 await initializePushNotifications();
-
-                // 권한 요청
                 await requestExactAlarmPermission();
                 await requestNotificationPermission();
-
-                // 사용 시간 추적 설정
                 await setupUsageTracking();
 
                 // 로딩 시뮬레이션 (필요한 경우 제거 가능)
