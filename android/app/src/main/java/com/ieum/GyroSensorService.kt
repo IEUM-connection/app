@@ -1,4 +1,4 @@
-package com.choongang.ieum
+package com.meetbti.ieum
 
 import android.app.*
 import android.content.BroadcastReceiver
@@ -249,7 +249,7 @@ class GyroSensorService : Service(), SensorEventListener {
         private const val CHANNEL_ID = "GYRO_SENSOR_CHANNEL"
         private const val THRESHOLD = 0.1f
         private const val FALL_THRESHOLD = 0.1f
-        const val STOP_ALARM_ACTION = "com.choongang.ieum.action.STOP_ALARM"
+        const val STOP_ALARM_ACTION = "com.meetbti.ieum.action.STOP_ALARM"
     }
 
 }

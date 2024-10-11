@@ -1,4 +1,4 @@
-package com.choongang.ieum
+package com.meetbti.ieum
 
 import android.content.Context
 import android.hardware.Sensor
@@ -17,7 +17,7 @@ class GyroSensorManager(context: Context) : SensorEventListener {
 
     // 충격 감지 시 호출될 콜백 변수 선언
     var onShockDetected: (() -> Unit)? = null
-    
+
     // 넘어짐 감지 시 호출될 콜백 변수 선언
     var onFallDetected: (() -> Unit)? = null
 
@@ -40,7 +40,7 @@ class GyroSensorManager(context: Context) : SensorEventListener {
     override fun onSensorChanged(event: SensorEvent?) {
         event?.let {
             Log.d("GyroSensor", "센서 값 변화: x=${it.values[0]}, y=${it.values[1]}, z=${it.values[2]}")
-            
+
             val x = it.values[0]
             val y = it.values[1]
             val z = it.values[2]

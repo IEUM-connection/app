@@ -1,4 +1,4 @@
-package com.choongang.ieum
+package com.meetbti.ieum
 
 import android.Manifest
 import android.content.Intent

@@ -1,4 +1,4 @@
-package com.choongang.ieum
+package com.meetbti.ieum
 
 import android.app.Application
 import com.facebook.react.PackageList
@@ -10,8 +10,8 @@ import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.load
 import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
 import com.facebook.react.defaults.DefaultReactNativeHost
 import com.facebook.soloader.SoLoader
-import com.choongang.ieum.AlarmPermissionPackage
-import com.choongang.ieum.UsageStatsModule
+import com.meetbti.ieum.AlarmPermissionPackage
+import com.meetbti.ieum.UsageStatsModule
 import com.facebook.react.bridge.NativeModule
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.uimanager.ViewManager
