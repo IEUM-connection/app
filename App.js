@@ -53,7 +53,8 @@ const App = () => {
 
         // FCM 리스너 설정
         const unsubscribeFcm = fcmUtils.setupFcmListeners(navigationRef);
-        fcmUtils.setupBackgroundHandler();
+
+        // setupBackgroundHandler 호출 제거 (index.js에서 이미 처리됨)
 
         // 컴포넌트 언마운트 시 정리 작업
         return () => {

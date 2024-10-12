@@ -9,9 +9,9 @@ import {
     ActivityIndicator,
     Image,
 } from 'react-native';
+import axios from 'axios';
 import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
-
-const TOTAL_DATA_COUNT = 59; // 총 데이터 수
+import { REACT_APP_API_KEY } from '@env';
 const PAGE_SIZE = 10; // 한 페이지당 아이템 수
 
 const AlarmListScreen = ({ navigation }) => {
@@ -20,99 +20,36 @@ const AlarmListScreen = ({ navigation }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [hasMoreData, setHasMoreData] = useState(true); // 더 이상 데이터가 없을 경우를 처리하기 위한 상태
 
-    const fetchData = () => {
+    const fetchData = async () => {
         if (isLoading || !hasMoreData) return;
 
         setIsLoading(true);
 
-        setTimeout(() => {
-            const remainingDataCount = TOTAL_DATA_COUNT - listData.length;
-            const loadItemCount = remainingDataCount >= PAGE_SIZE ? PAGE_SIZE : remainingDataCount;
+        try {
+            // 서버에서 데이터 요청
+            const response = await axios.get(`${REACT_APP_API_KEY}/api`, {
+                params: { page: page - 1, size: PAGE_SIZE }
+            });
 
-            if (loadItemCount > 0) {
-                // JSON 형태의 더미 데이터를 직접 생성
-                const newData = [
-                    { title: '알림 제목 1', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 1' },
-                    { title: '알림 제목 2', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 2' },
-                    { title: '알림 제목 3', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 3' },
-                    { title: '알림 제목 4', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 4' },
-                    { title: '알림 제목 5', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 5' },
-                    { title: '알림 제목 6', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 6' },
-                    { title: '알림 제목 7', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 7' },
-                    { title: '알림 제목 8', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 8' },
-                    { title: '알림 제목 9', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 9' },
-                    { title: '알림 제목 10', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 10' },
-                    { title: '알림 제목 11', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 11' },
-                    { title: '알림 제목 12', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 12' },
-                    { title: '알림 제목 13', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 13' },
-                    { title: '알림 제목 14', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 14' },
-                    { title: '알림 제목 15', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 15' },
-                    { title: '알림 제목 16', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 16' },
-                    { title: '알림 제목 17', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 17' },
-                    { title: '알림 제목 18', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 18' },
-                    { title: '알림 제목 19', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 19' },
-                    { title: '알림 제목 20', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 20' },
-                    { title: '알림 제목 21', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 21' },
-                    { title: '알림 제목 22', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 22' },
-                    { title: '알림 제목 23', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 23' },
-                    { title: '알림 제목 24', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 24' },
-                    { title: '알림 제목 25', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 25' },
-                    { title: '알림 제목 26', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 26' },
-                    { title: '알림 제목 27', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 27' },
-                    { title: '알림 제목 28', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 28' },
-                    { title: '알림 제목 29', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 29' },
-                    { title: '알림 제목 30', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 30' },
-                    { title: '알림 제목 31', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 31' },
-                    { title: '알림 제목 32', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 32' },
-                    { title: '알림 제목 33', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 33' },
-                    { title: '알림 제목 34', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 34' },
-                    { title: '알림 제목 35', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 35' },
-                    { title: '알림 제목 36', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 36' },
-                    { title: '알림 제목 37', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 37' },
-                    { title: '알림 제목 38', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 38' },
-                    { title: '알림 제목 39', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 39' },
-                    { title: '알림 제목 40', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 40' },
-                    { title: '알림 제목 41', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 41' },
-                    { title: '알림 제목 42', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 42' },
-                    { title: '알림 제목 43', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 43' },
-                    { title: '알림 제목 44', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 44' },
-                    { title: '알림 제목 45', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 45' },
-                    { title: '알림 제목 46', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 46' },
-                    { title: '알림 제목 47', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 47' },
-                    { title: '알림 제목 48', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 48' },
-                    { title: '알림 제목 49', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 49' },
-                    { title: '알림 제목 50', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 50' },
-                    { title: '알림 제목 51', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 51' },
-                    { title: '알림 제목 52', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 52' },
-                    { title: '알림 제목 53', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 53' },
-                    { title: '알림 제목 54', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 54' },
-                    { title: '알림 제목 55', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 55' },
-                    { title: '알림 제목 56', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 56' },
-                    { title: '알림 제목 57', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 57' },
-                    { title: '알림 제목 58', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 58' },
-                    { title: '알림 제목 59', message: '역삼 2동 담당자님께서 알림을 보내셨습니다 59' },
-                ];
-
-                const newPageData = newData.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-
-                // 기존 데이터에 더미 데이터를 추가
-                setListData([...listData, ...newPageData]); // 필요한 만큼만 추가
-                setPage(page + 1); // 다음 페이지로 설정
+            const newData = response.data;
+            if (newData.length > 0) {
+                setListData([...listData, ...newData]);
+                setPage(page + 1);
+            } else {
+                setHasMoreData(false); // 더 이상 데이터가 없으면 종료
             }
-
-            if (listData.length + loadItemCount >= TOTAL_DATA_COUNT) {
-                setHasMoreData(false); // 모든 데이터를 로드했으므로 더 이상 데이터를 로드하지 않음
-            }
-
+        } catch (error) {
+            console.error('알림 목록 가져오기 실패:', error);
+        } finally {
             setIsLoading(false);
-        }, 1000); // 1초 후에 데이터를 불러옴
+        }
     };
 
     useEffect(() => {
         fetchData();
     }, []);
 
-    // renderItem 수정: JSON 형식 데이터의 필드를 렌더링
+    // renderItem 수정: 서버에서 받아온 데이터를 렌더링
     const renderItem = ({ item }) => (
         <View style={styles.item}>
             <Text style={styles.itemText}>{item.title}</Text>
@@ -153,7 +90,7 @@ const AlarmListScreen = ({ navigation }) => {
                 />
 
                 {/* 닫기 버튼 */}
-                <TouchableOpacity onPress={() => navigation.navigate('Main')} style={[styles.closeButton,styles.shadowProp]}>
+                <TouchableOpacity onPress={() => navigation.navigate('Main')} style={[styles.closeButton, styles.shadowProp]}>
                     <Text style={styles.closeButtonText}>닫기</Text>
                 </TouchableOpacity>
             </View>

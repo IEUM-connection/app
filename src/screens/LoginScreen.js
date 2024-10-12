@@ -1,22 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, TextInput, StyleSheet, TouchableOpacity, Text, Dimensions, Animated, Alert } from 'react-native';
 import Test from '../assets/images/loading.png';
-import messaging from '@react-native-firebase/messaging';
 import axios from 'axios';
 import { REACT_APP_API_KEY } from '@env';
+import * as Keychain from 'react-native-keychain';
 
 const { width: windowWidth, height: windowHeight } = Dimensions.get('window');
 
 const LoginScreen = ({ navigation }) => {
     const [memberCode, setMemberCode] = useState('');
-    const [fcmToken, setFcmToken] = useState(null);
     const fadeAnim = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
-        // FCM 토큰 가져오기
-        getFcmToken();
-
-        // 로고 애니메이션
         Animated.timing(fadeAnim, {
             toValue: 1,
             duration: 1000,
@@ -24,12 +19,12 @@ const LoginScreen = ({ navigation }) => {
         }).start();
     }, [fadeAnim]);
 
-    const getFcmToken = async () => {
+    const saveToKeychain = async (accessToken) => {
         try {
-            const token = await messaging().getToken();
-            setFcmToken(token);
+            await Keychain.setGenericPassword('token', accessToken);
+            console.log('Access token saved successfully to Keychain');
         } catch (error) {
-            console.error('FCM 토큰 가져오기 실패:', error);
+            console.error('Error saving to Keychain:', error);
         }
     };
 
@@ -46,26 +41,30 @@ const LoginScreen = ({ navigation }) => {
                 headers: {
                     'loginType': 'member',
                 },
+                validateStatus: function (status) {
+                    return status >= 200 && status < 300;
+                },
             });
 
             console.log('로그인 성공:', response.data);
+            console.log('응답 헤더:', response.headers);
 
-            // FCM 토큰 서버로 전송
-            if (fcmToken) {
-                try {
-                    await axios.post(`${REACT_APP_API_KEY}/members/1/fcm-token`, {
-                        fcmToken: fcmToken
-                    }, {
-                        headers: {
-                            'Authorization': `Bearer ${response.data.token}`
-                        }
-                    });
-                    console.log('FCM 토큰 업데이트 성공');
-                } catch (error) {
-                    console.error('FCM 토큰 업데이트 실패:', error);
-                }
+
+
+            // 헤더에서 토큰 찾기
+            const accessToken = response.headers['authorization']
+
+
+            if (accessToken) {
+                await saveToKeychain(accessToken);
+                console.log('인증 토큰이 키체인에 저장되었습니다.');
+                console.log(accessToken)
+            } else {
+                console.warn('로그인 응답에서 인증 토큰을 찾을 수 없습니다.');
+                console.log('전체 응답:', response);
             }
 
+            // 메인 화면으로 이동
             navigation.replace('Main');
         } catch (error) {
             console.error('로그인 실패:', error);

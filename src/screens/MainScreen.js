@@ -1,24 +1,90 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet, SafeAreaView, Platform, Dimensions } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, Image, StyleSheet, SafeAreaView, Platform, Dimensions, ActivityIndicator } from 'react-native';
 import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
 import FontAwesomeIcons from 'react-native-vector-icons/FontAwesome';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import HelpRequestModal from '../components/HelpRequestModal'; // 추가
+import HelpRequestModal from '../components/HelpRequestModal';
+import messaging from '@react-native-firebase/messaging';
+import axios from 'axios';
+import { REACT_APP_API_KEY } from '@env';
+import * as Keychain from 'react-native-keychain';
 
 const { width: windowWidth, height: windowHeight } = Dimensions.get('window');
 
 const MainScreen = ({ navigation }) => {
     const [modalVisible, setModalVisible] = useState(false);
-    const userName = "고세동"; // 임시 데이터
-    const guardianName = "윤영하"; // 임시 데이터
-    const adminName = "역삼2동 최고민수 주무관"; // 임시 데이터
-    const alarmCount = 41; // 임시 알람 수 데이터
+    const [userData, setUserData] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [alarmCount, setAlarmCount] = useState(0);
+
+    useEffect(() => {
+        fetchUserData();
+        updateFcmToken();
+    }, []);
+
+    const fetchUserData = async () => {
+        try {
+            const credentials = await Keychain.getGenericPassword();
+            if (!credentials) {
+                console.error('인증 토큰이 없습니다.');
+                navigation.replace('Login');
+                return;
+            }
+            const accessToken = credentials.password; // JSON 파싱하지 않고 바로 토큰 사용
+
+            const response = await axios.get(`${REACT_APP_API_KEY}/members/member`, {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}` // Bearer 형식으로 토큰 추가
+                }
+            });
+
+            console.log('서버 응답:', response.data); // 응답 내용 로그 출력
+            setUserData(response.data.data);
+            setAlarmCount(response.data.data.alarmCount || 0); // 수정해야함 구현 생각해야함
+            setLoading(false);
+        } catch (error) {
+            console.error('사용자 데이터 가져오기 실패:', error);
+            setLoading(false);
+        }
+    };
+
+    const updateFcmToken = async () => {
+        try {
+            const fcmToken = await messaging().getToken();
+            const credentials = await Keychain.getGenericPassword();
+            if (!credentials) {
+                console.error('인증 토큰이 없습니다.');
+                return;
+            }
+            const accessToken = credentials.password;
+
+            if (fcmToken && accessToken) {
+                await axios.post(`${REACT_APP_API_KEY}/members/fcm-token`, {
+                    fcmToken: fcmToken
+                }, {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}` // Bearer 형식으로 토큰 추가
+                    }
+                });
+                console.log('FCM 토큰 업데이트 성공');
+            }
+        } catch (error) {
+            console.error('FCM 토큰 업데이트 실패:', error);
+        }
+    };
 
     const handleHelpRequest = () => {
         setModalVisible(false);
-        // 여기서 도움 요청 처리 로직을 추가합니다.
         console.log('도움이 요청되었습니다.');
     };
+
+    if (loading) {
+        return (
+            <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#0000ff" />
+            </View>
+        );
+    }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -37,7 +103,7 @@ const MainScreen = ({ navigation }) => {
             {/* 사용자 정보 */}
             <View style={styles.userInfo}>
                 <View style={styles.userNameContainer}>
-                    <Text style={styles.userName}>{userName}</Text>
+                    <Text style={styles.userName}>{userData?.name || '사용자'}</Text>
                     <Text style={styles.userNameSuffix}>님과의</Text>
                 </View>
                 <Image source={require('../assets/images/appIcon.png')} style={styles.icon} />
@@ -45,8 +111,8 @@ const MainScreen = ({ navigation }) => {
 
             {/* 보호자 및 담당자 정보 */}
             <View style={[styles.guardianInfo, styles.shadowProp]}>
-                <Text style={styles.guardianInfoText}>보호자:  {guardianName}</Text>
-                <Text style={styles.guardianInfoText}>담당자:  {adminName}</Text>
+                <Text style={styles.guardianInfoText}>보호자: {userData?.guardianName || '정보 없음'}</Text>
+                <Text style={styles.guardianInfoText}>담당자: {userData?.adminName || '정보 없음'}</Text>
             </View>
 
             {/* 도움 요청 버튼 */}
