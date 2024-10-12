@@ -48,7 +48,7 @@ class GyroSensorService : Service(), SensorEventListener {
             addAction(STOP_ALARM_ACTION)
             addCategory(Intent.CATEGORY_DEFAULT)
         }
-        
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(stopAlarmReceiver, intentFilter, Context.RECEIVER_EXPORTED)
         } else {
@@ -247,8 +247,8 @@ class GyroSensorService : Service(), SensorEventListener {
    companion object {
         private const val NOTIFICATION_ID = 1
         private const val CHANNEL_ID = "GYRO_SENSOR_CHANNEL"
-        private const val THRESHOLD = 0.1f
-        private const val FALL_THRESHOLD = 0.1f
+        private const val THRESHOLD = 100.1f
+        private const val FALL_THRESHOLD = 100.1f
         const val STOP_ALARM_ACTION = "com.meetbti.ieum.action.STOP_ALARM"
     }
 
