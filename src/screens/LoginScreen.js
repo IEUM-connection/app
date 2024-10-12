@@ -46,6 +46,7 @@ const LoginScreen = ({ navigation }) => {
                 },
             });
 
+        
             console.log('로그인 성공:', response.data);
             console.log('응답 헤더:', response.headers);
 
@@ -66,9 +67,21 @@ const LoginScreen = ({ navigation }) => {
 
             // 메인 화면으로 이동
             navigation.replace('Main');
-        } catch (error) {
+        }catch (error) {
             console.error('로그인 실패:', error);
-            Alert.alert('로그인 실패', error.response?.data?.message || '알 수 없는 오류가 발생했습니다.');
+            if (error.response) {
+                // 서버가 2xx 범위를 벗어나는 상태 코드로 응답한 경우
+                console.error('응답 데이터:', error.response.data);
+                console.error('응답 상태:', error.response.status);
+                console.error('응답 헤더:', error.response.headers);
+            } else if (error.request) {
+                // 요청이 이루어졌으나 응답을 받지 못한 경우
+                console.error('요청:', error.request);
+            } else {
+                // 요청을 설정하는 중에 문제가 발생한 경우
+                console.error('에러 메시지:', error.message);
+            }
+            Alert.alert('로그인 실패', '서버에 연결할 수 없습니다. 네트워크 연결을 확인해주세요.');
         }
     };
 
@@ -87,7 +100,7 @@ const LoginScreen = ({ navigation }) => {
                         value={memberCode}
                         onChangeText={setMemberCode}
                         textAlign="center"
-                        keyboardType="numeric"
+                        keyboardType="default"
                         maxLength={6}
                     />
                     <TouchableOpacity

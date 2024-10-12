@@ -17,30 +17,25 @@ import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
 import com.facebook.react.defaults.DefaultReactActivityDelegate
+import com.meetbti.ieum.TokenPackage
 
 class MainActivity : ReactActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d("MainActivity", "MainActivity onCreate 호출됨")
+        // 초기화 작업 수행 (필요한 경우)
+    }
 
-        // GyroSensorService 시작
-        Intent(this, GyroSensorService::class.java).also { intent ->
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                startForegroundService(intent)
-            } else {
-                startService(intent)
-            }
-        }
-
-        // 배터리 최적화 비활성화
-        disableBatteryOptimization()
-
+    override fun onResume() {
+        super.onResume()
+        Log.d("MainActivity", "MainActivity onResume 호출됨")
         // 권한 체크 및 요청
         checkPermissions()
     }
 
     private fun checkPermissions() {
+        Log.d("PermissionCheck", "권한 체크 시작")
         val permissionsNeeded = mutableListOf<String>()
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.BODY_SENSORS) != PackageManager.PERMISSION_GRANTED) {
@@ -59,16 +54,24 @@ class MainActivity : ReactActivity() {
         }
 
         if (permissionsNeeded.isNotEmpty()) {
+            Log.d("PermissionCheck", "권한 요청 필요: $permissionsNeeded")
             ActivityCompat.requestPermissions(this, permissionsNeeded.toTypedArray(), 1)
+        } else {
+            Log.d("PermissionCheck", "모든 권한이 이미 승인됨")
+            // 모든 권한이 승인됨, 서비스 시작
+            startGyroSensorService()
         }
     }
 
     // 권한 요청 결과 처리
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        Log.d("PermissionCheck", "권한 요청 결과 처리 중: requestCode=$requestCode")
         if (requestCode == 1) {
             if (grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
                 Log.d("Permission", "필요한 모든 권한이 승인되었습니다.")
+                // 모든 권한이 승인됨, 서비스 시작
+                startGyroSensorService()
             } else {
                 Log.d("Permission", "필요한 권한 중 일부가 거부되었습니다.")
                 Toast.makeText(this, "필요한 권한이 승인되지 않았습니다.", Toast.LENGTH_SHORT).show()
@@ -76,8 +79,24 @@ class MainActivity : ReactActivity() {
         }
     }
 
+    // GyroSensorService 시작
+    private fun startGyroSensorService() {
+        Log.d("Service", "GyroSensorService 시작")
+        Intent(this, GyroSensorService::class.java).also { intent ->
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(intent)
+            } else {
+                startService(intent)
+            }
+        }
+
+        // 배터리 최적화 비활성화
+        disableBatteryOptimization()
+    }
+
     // 배터리 최적화를 비활성화하는 메서드
     private fun disableBatteryOptimization() {
+        Log.d("BatteryOptimization", "배터리 최적화 비활성화 시도")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             val intent = Intent()
             val packageName = applicationContext.packageName
@@ -86,6 +105,8 @@ class MainActivity : ReactActivity() {
                 intent.action = Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
                 intent.data = Uri.parse("package:$packageName")
                 startActivity(intent)
+            } else {
+                Log.d("BatteryOptimization", "이미 배터리 최적화가 비활성화됨")
             }
         }
     }

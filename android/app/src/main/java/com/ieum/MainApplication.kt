@@ -1,5 +1,8 @@
 package com.meetbti.ieum
 
+import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.app.Application
 import com.facebook.react.PackageList
 import com.facebook.react.ReactApplication
@@ -15,6 +18,8 @@ import com.meetbti.ieum.UsageStatsModule
 import com.facebook.react.bridge.NativeModule
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.uimanager.ViewManager
+import com.meetbti.ieum.TokenPackage
+
 
 class MainApplication : Application(), ReactApplication {
 
@@ -23,6 +28,7 @@ class MainApplication : Application(), ReactApplication {
             override fun getPackages(): List<ReactPackage> {
                 val packages = PackageList(this).packages.toMutableList()
                 packages.add(AlarmPermissionPackage())
+                packages.add(TokenPackage()) // TokenPackage 추가
                 packages.add(object : ReactPackage {
                     override fun createNativeModules(reactContext: ReactApplicationContext): List<NativeModule> {
                         return listOf(UsageStatsModule(reactContext))
