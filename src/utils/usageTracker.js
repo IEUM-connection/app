@@ -2,16 +2,21 @@ import { Platform, NativeModules } from 'react-native';
 import BackgroundTimer from 'react-native-background-timer';
 import axios from 'axios';
 import { REACT_APP_API_KEY } from '@env';
+import * as Keychain from 'react-native-keychain';
 
 const { UsageStatsModule } = NativeModules;
 
 let isTrackingSetup = false;
 let screenOffStartTime = null;
 let lastPostTime = null;
-const INITIAL_POST_DELAY = 10000; // 30분을 밀리초로 표현 (처음 30분은 데이터 전송하지 않음)
-const POST_INTERVAL = 1000 ; // 30분을 밀리초로 표현   (이후 30분마다 데이터 전송)
-const API_URL = `${REACT_APP_API_KEY}/members`; // POST 요청을 보낼 API 엔드포인트
+// 처음 30분 동안은 데이터를 전송하지 않습니다.
+const INITIAL_POST_DELAY = 30 * 60 * 1000; // 30분을 밀리초로 표현
 
+// 이후 30분마다 데이터를 전송합니다.
+const POST_INTERVAL = 30 * 60 * 1000; // 30분을 밀리초로 표현
+
+// 30초마다 화면 상태를 확인합니다.
+const CHECK_INTERVAL = 30 * 1000; // 30초를 밀리초로 표현
 export const setupUsageTracking = () => {
     if (isTrackingSetup) {
         console.log('[사용 추적기] 추적이 이미 설정되어 있습니다. 건너뜁니다.');
@@ -62,32 +67,37 @@ const startScreenStateTracking = () => {
             .catch((error) => {
                 console.error('[사용 추적기] 화면 상태 확인 오류:', error);
             });
-    }, 10000); // 30초마다 확인
+    }, CHECK_INTERVAL);
 };
 
-const sendUsageData = (screenOffDuration) => {
-    // Assuming you have the JWT token stored in a variable or can retrieve it
-    const jwtToken = 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJyb2xlcyI6Ik1FTUJFUiIsInVzZXJuYW1lIjoiTUVNMDA0Iiwic3ViIjoiTUVNMDA0IiwiaWF0IjoxNzI4NTM5NDg3LCJleHAiOjE3Mjg1NDMwODd9.yO3q1gWbwtlZufkLPtzVfdXRdxFpmkyvBXUZaltrO34';
-    axios.patch(API_URL, {
-        phoneInactiveDuration: screenOffDuration,
-        // timestamp: new Date().toISOString()
-    }, {
-        headers: {
-            'Authorization':jwtToken,
-            'Content-Type': 'application/json'
+const sendUsageData = async (screenOffDuration) => {
+    try {
+        const credentials = await Keychain.getGenericPassword();
+        if (!credentials) {
+            console.error('인증 토큰이 없습니다.');
+            return;
         }
-    })
-        .then(response => {
-            console.log('[사용 추적기] 사용 데이터 전송 성공:', response.data);
-        })
-        .catch(error => {
-            console.error('[사용 추적기] 사용 데이터 전송 실패:', error);
-            console.log(API_URL);
-            console.log('[사용 추적기] 사용 데이터:', {
-                phoneInactiveDuration: screenOffDuration,
-                // timestamp: new Date().toISOString()
-            });
+        const accessToken = credentials.password;
+
+        const response = await axios.patch(`${REACT_APP_API_KEY}/members/phone-inactive`, {
+            phoneInactiveTimeMs: screenOffDuration,
+        }, {
+            headers: {
+                'Authorization': `Bearer ${accessToken}`
+            }
         });
+
+        console.log('[사용 추적기] 사용 데이터 전송 성공:', response.data);
+    } catch (error) {
+        console.error('[사용 추적기] 사용 데이터 전송 실패:', error);
+        if (error.response) {
+            console.error('응답 데이터:', error.response.data);
+            console.error('응답 상태:', error.response.status);
+        }
+        console.log('[사용 추적기] 사용 데이터:', {
+            phoneInactiveTimeMs: screenOffDuration,
+        });
+    }
 };
 
 export const stopUsageTracking = () => {
