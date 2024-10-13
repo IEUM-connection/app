@@ -45,6 +45,7 @@ class AlarmActivity : Activity() {
             Log.d("AlarmActivity", "스톱 버튼 클릭됨")
             val stopIntent = Intent(GyroSensorService.STOP_ALARM_ACTION).apply {
                 setPackage(packageName)  // 명시적으로 패키지 지정
+                 putExtra("manual", true) // 수동으로 알람 종료
                 addCategory(Intent.CATEGORY_DEFAULT)
             }
             Log.d("AlarmActivity", "STOP_ALARM 인텐트 생성됨: ${stopIntent.action}")

@@ -7,6 +7,8 @@ import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
 import com.facebook.react.bridge.Promise
+import android.util.Log
+
 
 class TokenModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
 
@@ -41,8 +43,10 @@ class TokenModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaM
                 apply()
             }
             promise.resolve(true)
+            Log.d("GyroSensor", "토큰 EncryptedSharedPreferences에 저장됨: $token")
         } catch (e: Exception) {
             promise.reject("SAVE_TOKEN_ERROR", e)
+             Log.e("GyroSensor", "토큰 저장 실패: ${e.message}")
         }
     }
 

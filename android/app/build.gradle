@@ -92,7 +92,7 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
-        buildConfigField "String", "API_URL", "\"http://172.30.1.99:8080/\""
+        buildConfigField "String", "API_URL", "\"http://172.30.1.79:8080/\""
 
     }
     signingConfigs {
