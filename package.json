@@ -33,7 +33,8 @@
     "react-native-screens": "^3.34.0",
     "react-native-sensors": "^7.3.6",
     "react-native-sound": "^0.11.2",
-    "react-native-vector-icons": "^10.2.0"
+    "react-native-vector-icons": "^10.2.0",
+    "your-package-name": "^0.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
