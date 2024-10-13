@@ -318,6 +318,7 @@ class GyroSensorService : Service(), SensorEventListener {
         private const val THRESHOLD = 0.5f
         private const val FALL_THRESHOLD = 0.5f
         const val STOP_ALARM_ACTION = "com.ieum.action.STOP_ALARM"
+
     }
 
     private fun sendSms() {

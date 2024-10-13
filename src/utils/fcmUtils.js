@@ -2,8 +2,7 @@ import messaging from '@react-native-firebase/messaging';
 import { Alert, Platform } from 'react-native';
 import notifee, { AndroidImportance, EventType } from '@notifee/react-native';
 import axios from 'axios';
-
-const API_URL = 'YOUR_SERVER_API_URL'; // 서버 API URL을 여기에 입력하세요
+import {REACT_APP_API_KEY} from '@env';
 
 export const requestUserPermission = async () => {
     const authStatus = await messaging().requestPermission();
@@ -36,7 +35,7 @@ export const registerFcmTokenWithServer = async (userId) => {
     try {
         const token = await getFcmToken();
         if (token) {
-            const response = await axios.post(`${API_URL}/register-fcm-token`, {
+            const response = await axios.post(`${REACT_APP_API_KEY}/register-fcm-token`, {
                 userId: userId,
                 fcmToken: token
             });
