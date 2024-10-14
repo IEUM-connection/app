@@ -4,6 +4,9 @@ import Test from '../assets/images/loading.png';
 import axios from 'axios';
 import { REACT_APP_API_KEY } from '@env';
 import * as Keychain from 'react-native-keychain';
+import { NativeModules } from 'react-native';
+
+const { TokenModule } = NativeModules; // Native Module 가져오기
 
 const { width: windowWidth, height: windowHeight } = Dimensions.get('window');
 
@@ -21,8 +24,20 @@ const LoginScreen = ({ navigation }) => {
 
     const saveToKeychain = async (accessToken) => {
         try {
-            await Keychain.setGenericPassword('token', accessToken);
+
+             // Keychain에 Access Token 저장
+            Keychain.setGenericPassword('token', accessToken);
             console.log('Access token saved successfully to Keychain');
+
+              // EncryptedSharedPreferences에 Access Token 저장 via Native Module
+              TokenModule.saveAccessToken(accessToken)
+              .then(() => {
+                  console.log('Access token saved successfully to EncryptedSharedPreferences');
+              })
+              .catch((error) => {
+                  console.error('Error saving access token to EncryptedSharedPreferences:', error);
+              });
+              
         } catch (error) {
             console.error('Error saving to Keychain:', error);
         }
@@ -46,6 +61,7 @@ const LoginScreen = ({ navigation }) => {
                 },
             });
 
+        
             console.log('로그인 성공:', response.data);
             console.log('응답 헤더:', response.headers);
 

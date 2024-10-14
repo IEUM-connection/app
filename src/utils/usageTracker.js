@@ -2,7 +2,9 @@ import { Platform, NativeModules } from 'react-native';
 import BackgroundTimer from 'react-native-background-timer';
 import axios from 'axios';
 import { REACT_APP_API_KEY } from '@env';
+import { checkPropTypes } from 'prop-types';
 import * as Keychain from 'react-native-keychain';
+
 
 const { UsageStatsModule } = NativeModules;
 
@@ -25,6 +27,7 @@ export const setupUsageTracking = () => {
     isTrackingSetup = true;
 
     console.log('[사용 추적기] 화면 상태 추적이 시작되었습니다.');
+    console.log(REACT_APP_API_KEY)
     if (Platform.OS === 'android') {
         startScreenStateTracking();
     }
