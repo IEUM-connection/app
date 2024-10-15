@@ -5,6 +5,7 @@ import axios from 'axios';
 import { REACT_APP_API_KEY } from '@env';
 import * as Keychain from 'react-native-keychain';
 import { NativeModules } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // AsyncStorage 임포트
 
 const { TokenModule } = NativeModules; // Native Module 가져오기
 
@@ -13,6 +14,22 @@ const { width: windowWidth, height: windowHeight } = Dimensions.get('window');
 const LoginScreen = ({ navigation }) => {
     const [memberCode, setMemberCode] = useState('');
     const fadeAnim = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        // 자동 로그인 체크
+        const checkUserCode = async () => {
+            try {
+                const storedUserCode = await AsyncStorage.getItem('userCode');
+                if (storedUserCode !== null) {
+                    // 사용자 코드가 존재하면 메인 화면으로 이동
+                    navigation.replace('Main');
+                }
+            } catch (error) {
+                console.error('Failed to fetch user code from AsyncStorage:', error);
+            }
+        };
+        checkUserCode();
+    }, []);
 
     useEffect(() => {
         Animated.timing(fadeAnim, {
@@ -25,19 +42,19 @@ const LoginScreen = ({ navigation }) => {
     const saveToKeychain = async (accessToken) => {
         try {
 
-             // Keychain에 Access Token 저장
+            // Keychain에 Access Token 저장
             Keychain.setGenericPassword('token', accessToken);
             console.log('Access token saved successfully to Keychain');
 
-              // EncryptedSharedPreferences에 Access Token 저장 via Native Module
-              TokenModule.saveAccessToken(accessToken)
-              .then(() => {
-                  console.log('Access token saved successfully to EncryptedSharedPreferences');
-              })
-              .catch((error) => {
-                  console.error('Error saving access token to EncryptedSharedPreferences:', error);
-              });
-              
+            // EncryptedSharedPreferences에 Access Token 저장 via Native Module
+            TokenModule.saveAccessToken(accessToken)
+                .then(() => {
+                    console.log('Access token saved successfully to EncryptedSharedPreferences');
+                })
+                .catch((error) => {
+                    console.error('Error saving access token to EncryptedSharedPreferences:', error);
+                });
+
         } catch (error) {
             console.error('Error saving to Keychain:', error);
         }
@@ -61,15 +78,12 @@ const LoginScreen = ({ navigation }) => {
                 },
             });
 
-        
+
             console.log('로그인 성공:', response.data);
             console.log('응답 헤더:', response.headers);
 
-
-
             // 헤더에서 토큰 찾기
             const accessToken = response.headers['authorization']
-
 
             if (accessToken) {
                 await saveToKeychain(accessToken);
@@ -80,9 +94,12 @@ const LoginScreen = ({ navigation }) => {
                 console.log('전체 응답:', response);
             }
 
+            // AsyncStorage에 userCode 저장
+            await AsyncStorage.setItem('userCode', memberCode);
+
             // 메인 화면으로 이동
             navigation.replace('Main');
-        }catch (error) {
+        } catch (error) {
             console.error('로그인 실패:', error);
             if (error.response) {
                 // 서버가 2xx 범위를 벗어나는 상태 코드로 응답한 경우

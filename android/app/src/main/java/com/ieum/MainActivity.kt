@@ -17,14 +17,69 @@ import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
 import com.facebook.react.defaults.DefaultReactActivityDelegate
-import com.meetbti.ieum.TokenPackage
 
 class MainActivity : ReactActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d("MainActivity", "MainActivity onCreate 호출됨")
-        // 초기화 작업 수행 (필요한 경우)
+
+        // 권한 체크 및 요청을 onCreate에서 호출
+        checkPermissions()
+    }
+
+    // onResume()에서 권한 체크 함수 호출 제거
+    // override fun onResume() {
+    //     super.onResume()
+    //     Log.d("MainActivity", "MainActivity onResume 호출됨")
+    //     // 권한 체크 및 요청 제거
+    //     // checkPermissions()
+    // }
+
+    private fun checkPermissions() {
+        Log.d("PermissionCheck", "권한 체크 시작")
+        val permissionsNeeded = mutableListOf<String>()
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.BODY_SENSORS) != PackageManager.PERMISSION_GRANTED) {
+            permissionsNeeded.add(Manifest.permission.BODY_SENSORS)
+        }
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACTIVITY_RECOGNITION) != PackageManager.PERMISSION_GRANTED) {
+            permissionsNeeded.add(Manifest.permission.ACTIVITY_RECOGNITION)
+        }
+
+        // POST_NOTIFICATIONS 권한 요청 제거
+        // if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        //     if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+        //         permissionsNeeded.add(Manifest.permission.POST_NOTIFICATIONS)
+        //     }
+        // }
+
+        if (permissionsNeeded.isNotEmpty()) {
+            Log.d("PermissionCheck", "권한 요청 필요: $permissionsNeeded")
+            ActivityCompat.requestPermissions(this, permissionsNeeded.toTypedArray(), 1)
+        } else {
+            Log.d("PermissionCheck", "모든 권한이 이미 승인됨")
+            // 모든 권한이 승인됨, 서비스 시작
+            startGyroSensorService()
+        }
+    }
+
+    // 권한 요청 결과 처리
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        Log.d("PermissionCheck", "권한 요청 결과 처리 중: requestCode=$requestCode")
+        if (requestCode == 1) {
+            if (grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
+                Log.d("Permission", "필요한 모든 권한이 승인되었습니다.")
+                // 모든 권한이 승인됨, 서비스 시작
+                startGyroSensorService()
+            } else {
+                Log.d("Permission", "필요한 권한 중 일부가 거부되었습니다.")
+                Toast.makeText(this, "필요한 권한이 승인되지 않았습니다.", Toast.LENGTH_SHORT).show()
+            }
+        }
+
     }
 
     // GyroSensorService 시작

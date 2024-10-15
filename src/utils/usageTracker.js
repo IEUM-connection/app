@@ -91,7 +91,9 @@ const handleScreenOff = (result) => {
 const checkTwelveHourMark = (currentTime) => {
     if (Math.abs(totalScreenOffTime - TWELVE_HOURS) < CHECK_INTERVAL / 2) {
         console.log('[사용 추적기] 정확히 12시간 미사용 감지');
+
         sendSms();
+
         sendUsageData(TWELVE_HOURS, true);
         // 12시간 정확히 도달 후 타이머 리셋
         screenOffStartTime = currentTime;
@@ -136,7 +138,9 @@ const sendUsageData = async (screenOffDuration, isTwelveHourMark = false) => {
             }
         });
 
+
         memberInfo = response.data.data;
+
 
         console.log(`[사용 추적기] 사용 데이터 전송 성공 ${isTwelveHourMark ? '(정확히 12시간 미사용)' : ''}:`, response.data);
     } catch (error) {
@@ -151,6 +155,7 @@ const sendUsageData = async (screenOffDuration, isTwelveHourMark = false) => {
         });
     }
 };
+
 
 const sendSms = async () => {
     try {

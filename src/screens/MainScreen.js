@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet, SafeAreaView, Platform, Dimensions, ActivityIndicator } from 'react-native';
-import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
 import FontAwesomeIcons from 'react-native-vector-icons/FontAwesome';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import HelpRequestModal from '../components/HelpRequestModal';
-import messaging from '@react-native-firebase/messaging';
 import axios from 'axios';
 import { REACT_APP_API_KEY } from '@env';
 import * as Keychain from 'react-native-keychain';
+import eventEmitter from '../utils/EventEmitter';
+import { requestUserPermission, getFcmToken, initializeNotifee, setupFcmListeners, getNotificationCount, resetNotificationCount } from '../utils/fcmUtils';
 
 const { width: windowWidth, height: windowHeight } = Dimensions.get('window');
 
@@ -15,13 +15,52 @@ const MainScreen = ({ navigation }) => {
     const [modalVisible, setModalVisible] = useState(false);
     const [userData, setUserData] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [alarmCount, setAlarmCount] = useState(0);
+    const [notificationCount, setNotificationCount] = useState(0);
 
-    useEffect(() => {
-        fetchUserData();
-        updateFcmToken();
+    // 알림 카운트 업데이트 함수
+    const updateNotificationCount = useCallback(async () => {
+        const count = await getNotificationCount();
+        setNotificationCount(count);
     }, []);
 
+    useEffect(() => {
+        // 앱 초기화 함수
+        const initializeApp = async () => {
+            try {
+                const hasPermission = await requestUserPermission();
+                if (hasPermission) {
+                    await initializeNotifee();
+                    const token = await getFcmToken();
+                    if (token) {
+                        console.log("FCM 토큰:", token);
+                        await updateFcmToken(token);
+                    }
+                    setupFcmListeners(navigation);
+                }
+                await fetchUserData();
+                await updateNotificationCount();
+            } catch (error) {
+                console.error('앱 초기화 중 오류:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        initializeApp();
+
+        // 알림 카운트 업데이트 리스너
+        const notificationCountListener = eventEmitter.addListener(
+            'notificationCountUpdated',
+            updateNotificationCount
+        );
+
+        // 컴포넌트 언마운트 시 리스너 제거
+        return () => {
+            notificationCountListener.remove();
+        };
+    }, [navigation, updateNotificationCount]);
+
+    // 사용자 데이터 가져오기
     const fetchUserData = async () => {
         try {
             const credentials = await Keychain.getGenericPassword();
@@ -30,27 +69,23 @@ const MainScreen = ({ navigation }) => {
                 navigation.replace('Login');
                 return;
             }
-            const accessToken = credentials.password; // JSON 파싱하지 않고 바로 토큰 사용
+            const accessToken = credentials.password;
 
             const response = await axios.get(`${REACT_APP_API_KEY}/members/member`, {
                 headers: {
-                    'Authorization': `Bearer ${accessToken}` // Bearer 형식으로 토큰 추가
+                    'Authorization': `Bearer ${accessToken}`
                 }
             });
 
-            console.log('서버 응답:', response.data); // 응답 내용 로그 출력
             setUserData(response.data.data);
-            setAlarmCount(response.data.data.alarmCount || 0); // 수정해야함 구현 생각해야함
-            setLoading(false);
         } catch (error) {
             console.error('사용자 데이터 가져오기 실패:', error);
-            setLoading(false);
         }
     };
 
-    const updateFcmToken = async () => {
+    // FCM 토큰 업데이트
+    const updateFcmToken = async (fcmToken) => {
         try {
-            const fcmToken = await messaging().getToken();
             const credentials = await Keychain.getGenericPassword();
             if (!credentials) {
                 console.error('인증 토큰이 없습니다.');
@@ -58,24 +93,29 @@ const MainScreen = ({ navigation }) => {
             }
             const accessToken = credentials.password;
 
-            if (fcmToken && accessToken) {
-                await axios.post(`${REACT_APP_API_KEY}/members/fcm-token`, {
-                    fcmToken: fcmToken
-                }, {
-                    headers: {
-                        'Authorization': `Bearer ${accessToken}` // Bearer 형식으로 토큰 추가
-                    }
-                });
-                console.log('FCM 토큰 업데이트 성공');
-            }
+            await axios.post(`${REACT_APP_API_KEY}/members/fcm-token`, {
+                fcmToken: fcmToken
+            }, {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`
+                }
+            });
+            console.log('FCM 토큰 업데이트 성공');
         } catch (error) {
             console.error('FCM 토큰 업데이트 실패:', error);
         }
     };
 
+    // 도움 요청 처리
     const handleHelpRequest = () => {
         setModalVisible(false);
         console.log('도움이 요청되었습니다.');
+    };
+
+    // 알림 카운트 리셋
+    const handleResetNotificationCount = async () => {
+        await resetNotificationCount();
+        setNotificationCount(0);
     };
 
     if (loading) {
@@ -88,13 +128,19 @@ const MainScreen = ({ navigation }) => {
 
     return (
         <SafeAreaView style={styles.container}>
-            {/* 헤더 영역 */}
+            {/* 헤더 */}
             <View style={styles.header}>
-                <TouchableOpacity style={styles.notificationButton} onPress={() => navigation.navigate('AlarmList')}>
+                <TouchableOpacity
+                    style={styles.notificationButton}
+                    onPress={() => {
+                        navigation.navigate('AlarmList');
+                        handleResetNotificationCount();
+                    }}
+                >
                     <Image source={require('../assets/images/bell-grey.png')} style={styles.bellIcon} />
-                    {alarmCount > 0 && (
+                    {notificationCount > 0 && (
                         <View style={styles.badge}>
-                            <Text style={styles.badgeText}>{alarmCount > 99 ? '99+' : alarmCount}</Text>
+                            <Text style={styles.badgeText}>{notificationCount > 99 ? '99+' : notificationCount}</Text>
                         </View>
                     )}
                 </TouchableOpacity>
@@ -109,7 +155,7 @@ const MainScreen = ({ navigation }) => {
                 <Image source={require('../assets/images/appIcon.png')} style={styles.icon} />
             </View>
 
-            {/* 보호자 및 담당자 정보 */}
+            {/* 보호자 정보 */}
             <View style={[styles.guardianInfo, styles.shadowProp]}>
                 <Text style={styles.guardianInfoText}>보호자: {userData?.guardianName || '정보 없음'}</Text>
                 <Text style={styles.guardianInfoText}>담당자: {userData?.adminName || '정보 없음'}</Text>
@@ -170,7 +216,13 @@ const MainScreen = ({ navigation }) => {
 
             {/* 알림 내역 조회 버튼 */}
             <View style={styles.alarmHistoryContainer}>
-                <TouchableOpacity style={[styles.alarmHistoryButton, styles.shadowProp]} onPress={() => navigation.navigate('AlarmList')}>
+                <TouchableOpacity
+                    style={[styles.alarmHistoryButton, styles.shadowProp]}
+                    onPress={() => {
+                        navigation.navigate('AlarmList');
+                        handleResetNotificationCount();
+                    }}
+                >
                     <View style={styles.alarmHistoryContent}>
                         <Text style={styles.alarmHistoryText}>알림 내역 조회</Text>
                         <Image source={require('../assets/images/bell-yellow.png')} style={styles.bellIcon} />
@@ -180,8 +232,6 @@ const MainScreen = ({ navigation }) => {
         </SafeAreaView>
     );
 };
-
-export default MainScreen;
 
 const styles = StyleSheet.create({
     container: {
@@ -373,4 +423,11 @@ const styles = StyleSheet.create({
             },
         }),
     },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
 });
+
+export default MainScreen;
