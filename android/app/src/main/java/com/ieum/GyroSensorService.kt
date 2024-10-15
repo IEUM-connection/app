@@ -319,8 +319,8 @@ class GyroSensorService : Service(), SensorEventListener {
     companion object {
         private const val NOTIFICATION_ID = 1
         private const val CHANNEL_ID = "GYRO_SENSOR_CHANNEL"
-        private const val THRESHOLD = 0.5f
-        private const val FALL_THRESHOLD = 0.5f
+        private const val THRESHOLD = 300f
+        private const val FALL_THRESHOLD = 300f
         const val STOP_ALARM_ACTION = "com.ieum.action.STOP_ALARM"
 
     }
