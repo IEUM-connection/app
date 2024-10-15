@@ -13,10 +13,11 @@ let lastPostTime = null;
 let totalScreenOffTime = 0;
 
 // 시간 관련 상수 (밀리초 단위)
-const INITIAL_POST_DELAY = 30 * 60 * 1000; // 초기 30분 대기
-const POST_INTERVAL = 30 * 60 * 1000; // 30분마다 데이터 전송
-const CHECK_INTERVAL = 30 * 1000; // 30초마다 화면 상태 확인
+const INITIAL_POST_DELAY =  1000; // 초기 30분 대기
+const POST_INTERVAL = 1000; // 30분마다 데이터 전송
+const CHECK_INTERVAL =  1000; // 30초마다 화면 상태 확인
 const TWELVE_HOURS = 12 * 60 * 60 * 1000; // 12시간
+
 
 // 사용 추적 설정 함수
 export const setupUsageTracking = () => {
@@ -42,7 +43,17 @@ const startScreenStateTracking = () => {
                     if (!result.isUsing) {
                         handleScreenOff(result);
                     } else {
+
                         handleScreenOn();
+
+                        console.log('[사용 추적기] 화면 켜짐');
+                        if (screenOffStartTime !== null) {
+                            // 화면이 다시 켜졌을 때 미사용 시간을 0으로 보냅니다.
+                            sendUsageData(0);
+                        }
+                        screenOffStartTime = null;
+                        lastPostTime = null;
+
                     }
                 } else {
                     console.log('[사용 추적기] 올바른 데이터를 받지 못했습니다.');
@@ -80,6 +91,9 @@ const handleScreenOff = (result) => {
 const checkTwelveHourMark = (currentTime) => {
     if (Math.abs(totalScreenOffTime - TWELVE_HOURS) < CHECK_INTERVAL / 2) {
         console.log('[사용 추적기] 정확히 12시간 미사용 감지');
+
+        sendSms();
+
         sendUsageData(TWELVE_HOURS, true);
         // 12시간 정확히 도달 후 타이머 리셋
         screenOffStartTime = currentTime;
@@ -124,6 +138,10 @@ const sendUsageData = async (screenOffDuration, isTwelveHourMark = false) => {
             }
         });
 
+
+        memberInfo = response.data.data;
+
+
         console.log(`[사용 추적기] 사용 데이터 전송 성공 ${isTwelveHourMark ? '(정확히 12시간 미사용)' : ''}:`, response.data);
     } catch (error) {
         console.error('[사용 추적기] 사용 데이터 전송 실패:', error);
@@ -137,6 +155,52 @@ const sendUsageData = async (screenOffDuration, isTwelveHourMark = false) => {
         });
     }
 };
+
+
+const sendSms = async () => {
+    try {
+
+    if (memberInfo) {
+        // guardianPhone과 adminPhone이 존재하는지 확인 후 처리
+        console.log("회원 정보", memberInfo);
+        console.log("보호자 연락처", memberInfo.guardianPhone);
+        console.log("관리자 연락처", memberInfo.adminPhone);
+        const guardianPh = memberInfo.guardianPhone.replaceAll("-", "") ;
+        const adminPh = memberInfo.adminPhone.replaceAll("-", "");
+    
+
+    const smsBody =  `${memberInfo.name}님의 핸드폰 미사용시간이 12시간이 되었습니다.\n즉시 연락 바랍니다.\n -이음-`;
+
+    const smsRequest = {
+        body : smsBody,
+        gudianNum:guardianPh,
+        adminNum: adminPh
+    }
+
+    const smsData = JSON.stringify(smsRequest);
+    console.log("sms 전송 데이터", smsData);
+
+
+    const smsResponse = await axios.post(`${REACT_APP_API_KEY}/send-sms`,
+        smsRequest,
+        
+    );
+
+    if (smsResponse.status === 200) { // 응답이 성공적인지 확인
+        // const responseBody = await response.json();
+        // console.log("SMS 전송 성공:", responseBody); // 성공 로그 출력
+    } else { // 응답이 실패한 경우
+        const errorBody = await smsResponse.text(); // 에러 본문 가져오기
+        console.error(`SMS 전송 실패: ${smsResponse.statusText}, 응답 코드: ${smsResponse.status}, 에러 내용: ${errorBody}`); // 실패 로그 출력
+    }
+    } else {
+        console.error("멤버 정보를 가져오는 데 실패했습니다.");
+    }
+} catch (error) {
+    console.error("오류 발생:", error);
+   }
+}
+
 
 // 사용 추적 중지 함수
 export const stopUsageTracking = () => {

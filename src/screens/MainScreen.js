@@ -205,7 +205,7 @@ const MainScreen = ({ navigation }) => {
                     <View style={styles.buttonContent}>
                         <View style={styles.buttonTextContainer}>
                             <Text style={styles.buttonText2}>근처</Text>
-                            <Text style={styles.buttonText2}>병원/약국</Text>
+                            <Text style={styles.buttonText2}>병원</Text>
                         </View>
                         <View style={[styles.buttonIcon, { margin: -10 }]}>
                             <MaterialCommunityIcons name="hospital" size={90} color={'#00722E'} />

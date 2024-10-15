@@ -42,9 +42,9 @@ class GyroSensorService : Service(), SensorEventListener {
     private lateinit var stopAlarmReceiver: StopAlarmReceiver
     private lateinit var accessToken: String
 
-    data class MemberInfo(val name: String, val guardianPhone: String)
+    data class MemberInfo(val name: String, val guardianPhone: String, val adminPhone: String)
     data class MemberResponse(val data: MemberInfo)
-    data class SmsRequest(val body: String, val to: String, val from: String)
+    data class SmsRequest(val body: String, val gudianNum: String, val adminNum: String)
     data class AlertRequest(val recipient: String, val alertType: String, val scheduledTime: String, val content: String)
 
     override fun onCreate() {
@@ -109,7 +109,6 @@ class GyroSensorService : Service(), SensorEventListener {
                 // 필요 시 Access Token을 EncryptedSharedPreferences에 저장
                 saveAccessTokenToPreferences(accessToken)
             } else {
-                Log.e("GyroSensor", "토큰이 Intent에 포함되지 않음.")
             }
         } ?: run {
             Log.e("GyroSensor", "Intent가 null임.")
@@ -278,7 +277,6 @@ class GyroSensorService : Service(), SensorEventListener {
             } else {
                 CoroutineScope(Dispatchers.IO).launch {
                     sendSms()
-                    sendWebAlert()
                 }
                 Log.d("GyroSensor", "응급상황 발생! 알람이 자동으로 꺼졌습니다.") // 자동으로 꺼진 경우
             }
@@ -339,13 +337,14 @@ class GyroSensorService : Service(), SensorEventListener {
             // 멤버 정보를 성공적으로 가져온 경우
             if (memberInfo != null) {
                val fromNumber = memberInfo.guardianPhone.replace("[^\\d]".toRegex(), "")// 보호자의 전화번호
+               val adminNumber = memberInfo.adminPhone.replace("[^\\d]".toRegex(), "")// 관리자의 전화번호
                 val smsBody = "${memberInfo.name}님의 핸드폰에서 충격이 감지되었습니다. 즉시 확인 바랍니다. \n -이음-" // SMS 본문 작성
 
                 // SMS 전송 데이터 생성
                val smsRequest = SmsRequest(
                 body = "${memberInfo.name}님의 핸드폰에서 충격이 감지되었습니다. 즉시 확인 바랍니다.\n -이음-",
-                to = fromNumber,
-                from = "01000000000"
+                gudianNum = fromNumber,
+                adminNum = adminNumber
             )
 
                 val gson = Gson()
@@ -357,7 +356,7 @@ class GyroSensorService : Service(), SensorEventListener {
                 val client = OkHttpClient() // OkHttpClient 인스턴스 생성
                 val requestBody = smsData.toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull()) // 요청 본문을 JSON 형식으로 변환
                 val request = Request.Builder()
-                    .url("http://172.30.1.79:8080/send-sms") // SMS 전송을 위한 서버 URL 설정
+                    .url("${BuildConfig.API_BASE_URL}/send-sms") // SMS 전송을 위한 서버 URL 설정
                     .post(requestBody) // POST 방식으로 요청 본문 설정
                     .build() // 요청 객체 빌드
 
@@ -382,72 +381,12 @@ class GyroSensorService : Service(), SensorEventListener {
     }
 
 
-        private fun sendWebAlert() {
-            CoroutineScope(Dispatchers.IO).launch {
-            val accessToken = getAccessToken() // 액세스 토큰 가져오기
-
-            if (accessToken.isEmpty()) {
-                Log.e("GyroSensor", "Access Token이 비어 있습니다. 웹으로 알림을 보낼 수 없습니다.")
-                return@launch
-            }
-
-            val memberInfo = fetchMemberInfo(accessToken) // 멤버 정보 가져오기
-
-           // 멤버 정보를 성공적으로 가져온 경우
-            if (memberInfo != null) {
-
-            val alertRequest = AlertRequest(
-                recipient = "전체",
-                alertType = "긴급",
-                scheduledTime = getCurrentDatetimeLocal(),
-                content = "${memberInfo.name}님의 핸드폰에서 충격이 감지되었습니다."
-            )
-
-             val gson = Gson()
-             val alertData = gson.toJson(alertRequest)
-
-               Log.d("GyroSensor", "웹 알림 전송 데이터: $alertData")
-
-                 val client = OkHttpClient() // OkHttpClient 인스턴스 생성
-                val requestBody = alertData.toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull()) // 요청 본문을 JSON 형식으로 변환
-                val request = Request.Builder()
-                    .url("http://172.30.1.79:8080/api/send-alert") // SMS 전송을 위한 서버 URL 설정
-                    .post(requestBody) // POST 방식으로 요청 본문 설정
-                    .build() // 요청 객체 빌드
-
-                client.newCall(request).enqueue(object : Callback { // 비동기 요청 실행
-                    override fun onFailure(call: Call, e: IOException) { // 요청 실패 시 호출되는 콜백
-                        Log.e("GyroSensor", "웹 알림 전송 실패, e") // 오류 메시지 로그 출력
-                    }
-
-                    override fun onResponse(call: Call, response: Response) { // 요청 성공 시 호출되는 콜백
-                        if (response.isSuccessful) { // 응답이 성공적인지 확인
-                            Log.d("GyroSensor", "웹 알림 전송 성공: ${response.body?.string()}") // 성공 로그 출력
-                        } else { // 응답이 실패한 경우
-                            val errorBody = response.body?.string() // 에러 본문 가져오기
-                            Log.e("GyroSensor", "웹 알림 전송 실패: ${response.message}, 응답 코드: ${response.code}, 에러 내용: $errorBody") // 실패 로그 출력
-                        }
-                    }
-
-                })
-            } else {
-                Log.e("GyroSensor", "멤버 정보를 가져오는 데 실패했습니다.")
-            }
-        }
-    }
-
-        private fun getCurrentDatetimeLocal(): String {
-            val currentDateTime = LocalDateTime.now()
-            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss") // 원하는 형식으로 포맷 지정
-            return currentDateTime.format(formatter) // 포맷된 문자열 반환
-        }
-
     // 멤버 정보를 가져오는 함수 정의
     private suspend fun fetchMemberInfo(accessToken: String): MemberInfo? {
         return try {
             val client = OkHttpClient() // OkHttpClient 인스턴스 생성
             val request = Request.Builder()
-                .url("http://172.30.1.79:8080/members/member") // API URL
+                .url("${BuildConfig.API_BASE_URL}/members/member") // API URL
                 .addHeader("Authorization", "Bearer $accessToken") // Bearer 형식으로 토큰 추가
                 .build() // 요청 객체 빌드
 

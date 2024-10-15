@@ -23,6 +23,7 @@ class MainActivity : ReactActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d("MainActivity", "MainActivity onCreate 호출됨")
+
         // 권한 체크 및 요청을 onCreate에서 호출
         checkPermissions()
     }
@@ -78,6 +79,7 @@ class MainActivity : ReactActivity() {
                 Toast.makeText(this, "필요한 권한이 승인되지 않았습니다.", Toast.LENGTH_SHORT).show()
             }
         }
+
     }
 
     // GyroSensorService 시작
