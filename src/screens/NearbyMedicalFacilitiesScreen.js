@@ -1,3 +1,4 @@
+import axios from 'axios';
 import React, { useState, useEffect } from 'react';
 import {
     Platform,
@@ -9,123 +10,178 @@ import {
     ActivityIndicator,
 } from 'react-native';
 import SimpleLineIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import * as Keychain from 'react-native-keychain';
+import { REACT_APP_API_KEY } from '@env';
+import { Linking } from 'react-native'; // Linking 추가
+
 
 const TOTAL_DATA_COUNT = 11; // 총 데이터 수
 const PAGE_SIZE = 10; // 한 페이지당 아이템 수
 
 const NearbyMedicalFacilitiesScreen = ({ navigation }) => {
+
     const [listData, setListData] = useState([]);
     const [page, setPage] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
     const [hasMoreData, setHasMoreData] = useState(true);
+    const [memberInfo, setMemberInfo] = useState([]);
+    const [latitude, setLatitude] = useState();
+    const [longitude, setLongitude] = useState();
+    
 
-    const fetchData = () => {
-        if (isLoading || !hasMoreData) return;
+        const fetchMemberInfo = async () => {
+            try {
+                const credentials = await Keychain.getGenericPassword();
+                if (!credentials) {
+                    console.error('인증 토큰이 없습니다.');
+                    navigation.replace('Login');
+                    return;
+                }
 
-        setIsLoading(true);
+                const accessToken = credentials.password; // JSON 파싱하지 않고 바로 토큰 사용
+                console.log('accessToken', accessToken);
 
-        setTimeout(() => {
-            const remainingDataCount = TOTAL_DATA_COUNT - listData.length;
-            const loadItemCount = remainingDataCount >= PAGE_SIZE ? PAGE_SIZE : remainingDataCount;
+                const memberResponse = await axios.get(`${REACT_APP_API_KEY}/members/member`, {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}` // Bearer 형식으로 토큰 추가
+                    }
+                });
+                console.log('memberInfo', memberResponse.data);
+                setMemberInfo(memberResponse.data);
+                setLatitude(memberResponse.data.data.latitude);
+                setLongitude(memberResponse.data.data.longitude);
+                console.log('latitude:', memberResponse.data.data.latitude);
+                console.log('longitude:', memberResponse.data.data.longitude);
 
-            if (loadItemCount > 0) {
-                // 수정된 JSON 형태의 더미 데이터 (11개)
-                const newData = [
-                    { name: "역삼 종은병원", address: "테헤란로 7길 7", distance: 512, isOperating: true },
-                    { name: "역삼 럭키병원", address: "테헤란로 7길 54", distance: 1000, isOperating: true },
-                    { name: "강남 제일병원", address: "테헤란로 8길 12", distance: 1500, isOperating: true },
-                    { name: "강남역 참사랑병원", address: "생각대로 132", distance: 2300, isOperating: false },
-                    { name: "성모병원 신논현", address: "압구정동 219", distance: 3100, isOperating: false },
-                    { name: "오은영 약국", address: "금쪽이로 1050", distance: 3300, isOperating: true },
-                    { name: "강남 세브란스병원", address: "언주로 211", distance: 2800, isOperating: true },
-                    { name: "365열린약국", address: "강남대로 390", distance: 750, isOperating: true },
-                    { name: "미래약국", address: "테헤란로 152", distance: 1200, isOperating: false },
-                    { name: "연세사랑병원", address: "봉은사로 118", distance: 1800, isOperating: true },
-                    { name: "굿모닝 약국", address: "삼성로 212", distance: 2500, isOperating: false },
-                ];
-
-                const newPageData = newData.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-
-                setListData([...listData, ...newPageData]);
-                setPage(page + 1);
+            } catch (error) {
+                console.error('사용자 정보를 가져오는데 실패했습니다' , error);
+                setIsLoading(false);
             }
+        };
 
-            if (listData.length + loadItemCount >= TOTAL_DATA_COUNT) {
+        const fetchData = async () => {
+            if (isLoading || !hasMoreData) return;
+    
+            setIsLoading(true);
+    
+            // 사용자 정보를 먼저 가져옵니다.
+            await fetchMemberInfo();
+
+            console.log('latitude:', latitude);
+            console.log('longitude:', longitude);
+            console.log(`Request URL 테스트: ${REACT_APP_API_KEY}/hospital?location=${longitude},${latitude}`);
+
+    
+            // 이후 근처 의료 시설 데이터를 가져옵니다.
+            try {
+                if (latitude && longitude) {
+                const response = await axios.get(`${REACT_APP_API_KEY}/hospital?location=${longitude},${latitude}`);
+
+        console.log(`Request URL: ${REACT_APP_API_KEY}/hospital?location=${longitude},${latitude}`);
+        console.log('Response Data:', response.data); // 응답 데이터 확인
+
+        // 응답 데이터에서 items 배열을 가져옵니다.
+        const newData = response.data.data;
+
+        // newData가 배열인지 확인
+        if (Array.isArray(newData)) {
+            const newPageData = newData.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+            
+            setListData([...listData, ...newPageData]);
+            setPage(page + 1);
+            
+            if (listData.length + newPageData.length >= TOTAL_DATA_COUNT) {
                 setHasMoreData(false);
             }
-
-            setIsLoading(false);
-        }, 1000);
-    };
-
-    useEffect(() => {
-        fetchData();
-    }, []);
-
-    const renderItem = ({ item }) => {
-        const distanceText = item.distance >= 1000
-            ? `${(item.distance / 1000).toFixed(1)}km`
-            : `${item.distance}m`;
-
-        return (
-            <View style={[
-                styles.item,
-                item.isOperating ? styles.operatingItem : styles.closedItem
-            ]}>
-                <View style={styles.itemContent}>
-                    <Text style={styles.itemName}>{item.name}</Text>
-                    <Text style={styles.itemAddress}>{item.address}</Text>
-                    <Text style={styles.distanceText}>{distanceText}</Text>
-                </View>
+        } else {
+            console.error('응답 데이터가 배열이 아닙니다.', newData);
+        }
+        } else {
+        }
+    } catch (error) {
+        console.error('근처 병원 정보를 가져오는데 실패', error);
+    } finally {
+        setIsLoading(false);
+    }
+};
+    
+        useEffect(() => {
+            fetchMemberInfo().then(() => {
+               fetchData(); 
+            })
+        }, []);
+    
+        const renderItem = ({ item }) => {
+            const distanceText = item.distance >= 1
+                ? `${(item.distance).toFixed(1)}km`
+                : `${item.distance * 1000}m`;
+    
+            return (
                 <View style={[
-                    styles.operationStatus,
-                    item.isOperating ? styles.operatingStatus : styles.closedStatus
+                    styles.item,
+                    item.isOpen === 1 ? styles.operatingItem : styles.closedItem
                 ]}>
+                    <View style={styles.itemContent}>
+                        <Text style={styles.itemName}>{item.name}({item.dutyDivName})</Text>
+                        <Text style={styles.itemAddress}>{item.dutyAddr}</Text>
+                        <Text style={styles.distanceText}>{distanceText}</Text>
+                    </View>
+                    <View style={[
+                        styles.operationStatus,
+                        item.isOpen === 1 ? styles.operatingStatus : styles.closedStatus
+                    ]}>
+                         <TouchableOpacity onPress={() => {
+                        const phoneNumber = item.dutyTel1.startsWith('0') ? item.dutyTel1 : `0${item.dutyTel1}`;
+                        Linking.openURL(`tel:${phoneNumber}`);
+                    }}
+                    style={styles.phoneButton} // 버튼 스타일 추가
+                >
                     <Text style={styles.operationStatusText}>
-                        {item.isOperating ? '영업중' : '영업종료'}
+                        {item.isOpen === 1 ? '영업중 📞' : '영업종료'}
                     </Text>
+                </TouchableOpacity>
+                    </View>
+                </View>
+            );
+        };
+    
+        const handleLoadMore = () => {
+            if (!isLoading && hasMoreData) {
+                fetchData();
+            }
+        };
+    
+        return (
+            <View style={styles.container}>
+                <View style={[styles.header, styles.shadowProp]}>
+                    <View style={styles.headerContent}>
+                        <Text style={styles.headerText}>근처 병원 조회</Text>
+                        <SimpleLineIcons name="hospital" size={60} color="#00722E" style={styles.iconStyle} />
+                    </View>
+                </View>
+                <View style={[styles.listContainer, styles.shadowProp]}>
+                    <FlatList
+                        data={listData}
+                        renderItem={renderItem}
+                        keyExtractor={(item, index) => index.toString()}
+                        onEndReached={handleLoadMore}
+                        onEndReachedThreshold={0.5}
+                        ListFooterComponent={
+                            isLoading ? (
+                                <ActivityIndicator size="large" color="#000" />
+                            ) : !hasMoreData ? (
+                                <Text style={styles.endText}>모든 데이터를 불러왔습니다.</Text>
+                            ) : null
+                        }
+                    />
+                    <TouchableOpacity onPress={() => navigation.navigate('Main')} style={[styles.closeButton, styles.shadowProp]}>
+                        <Text style={styles.closeButtonText}>닫기</Text>
+                    </TouchableOpacity>
                 </View>
             </View>
         );
     };
-
-    const handleLoadMore = () => {
-        if (!isLoading && hasMoreData) {
-            fetchData();
-        }
-    };
-
-    return (
-        <View style={styles.container}>
-            <View style={[styles.header, styles.shadowProp]}>
-                <View style={styles.headerContent}>
-                    <Text style={styles.headerText}>근처 병원 / 약국 조회</Text>
-                    <SimpleLineIcons name="hospital" size={60} color="#00722E" style={styles.iconStyle} />
-                </View>
-            </View>
-            <View style={[styles.listContainer, styles.shadowProp]}>
-                <FlatList
-                    data={listData}
-                    renderItem={renderItem}
-                    keyExtractor={(item, index) => index.toString()}
-                    onEndReached={handleLoadMore}
-                    onEndReachedThreshold={0.5}
-                    ListFooterComponent={
-                        isLoading ? (
-                            <ActivityIndicator size="large" color="#000" />
-                        ) : !hasMoreData ? (
-                            <Text style={styles.endText}>모든 데이터를 불러왔습니다.</Text>
-                        ) : null
-                    }
-                />
-                <TouchableOpacity onPress={() => navigation.navigate('Main')} style={[styles.closeButton, styles.shadowProp]}>
-                    <Text style={styles.closeButtonText}>닫기</Text>
-                </TouchableOpacity>
-            </View>
-        </View>
-    );
-};
-
+    
 const styles = StyleSheet.create({
     container: {
         flex: 1,
