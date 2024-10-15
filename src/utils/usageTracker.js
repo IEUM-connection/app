@@ -43,7 +43,17 @@ const startScreenStateTracking = () => {
                     if (!result.isUsing) {
                         handleScreenOff(result);
                     } else {
+
                         handleScreenOn();
+
+                        console.log('[사용 추적기] 화면 켜짐');
+                        if (screenOffStartTime !== null) {
+                            // 화면이 다시 켜졌을 때 미사용 시간을 0으로 보냅니다.
+                            sendUsageData(0);
+                        }
+                        screenOffStartTime = null;
+                        lastPostTime = null;
+
                     }
                 } else {
                     console.log('[사용 추적기] 올바른 데이터를 받지 못했습니다.');

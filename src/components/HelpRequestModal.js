@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
+
 import {View, Text, TouchableOpacity, Modal, StyleSheet, Platform} from 'react-native';
+
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import axios from 'axios';
 import * as Keychain from 'react-native-keychain';
 import { REACT_APP_API_KEY } from '@env';
+
 
 const HelpRequestModal = ({ visible, onClose }) => {
     
@@ -83,7 +86,6 @@ const HelpRequestModal = ({ visible, onClose }) => {
         }
     };
 
-
     return (
         <Modal
             visible={visible}
@@ -93,15 +95,14 @@ const HelpRequestModal = ({ visible, onClose }) => {
         >
             <View style={styles.modalBackground}>
                 <View style={[styles.modalContainer, styles.shadowProp]}>
-                    {/* 우측 상단 X 버튼 */}
                     <TouchableOpacity style={styles.closeButton} onPress={onClose}>
                         <AntDesign name="close" size={40} color="#909090" />
                     </TouchableOpacity>
-                    {/* 모달 내용 */}
                     <Text style={[styles.modalText,{marginTop: 60}]}>도움을 </Text>
                     <Text style={[styles.modalText,{marginBottom: 30}]}>요청하시겠습니까?</Text>
                     {/* 요청하기 버튼 */}
                     <TouchableOpacity style={[styles.requestButton,styles.shadowProp]} onPress={sendSms}>
+
                         <Text style={styles.requestButtonText}>요청하기</Text>
                     </TouchableOpacity>
                 </View>
@@ -115,7 +116,7 @@ export default HelpRequestModal;
 const styles = StyleSheet.create({
     modalBackground: {
         flex: 1,
-        backgroundColor: 'rgba(228,228,228,0.5)', // 반투명 배경
+        backgroundColor: 'rgba(228,228,228,0.5)',
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -125,8 +126,8 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         padding: 20,
         position: 'relative',
-        borderWidth: 2,       // 테두리의 두께를 설정합니다.
-        borderColor: '#969696',  // 테두리의 색상을 설정합니다.
+        borderWidth: 2,
+        borderColor: '#969696',
     },
     closeButton: {
         position: 'absolute',

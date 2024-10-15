@@ -12,13 +12,15 @@ import {
 import axios from 'axios';
 import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
 import { REACT_APP_API_KEY } from '@env';
+import * as Keychain from 'react-native-keychain';
+
 const PAGE_SIZE = 10; // 한 페이지당 아이템 수
 
 const AlarmListScreen = ({ navigation }) => {
     const [listData, setListData] = useState([]);
-    const [page, setPage] = useState(1);
+    const [page, setPage] = useState(0); // API는 0부터 페이지 시작
     const [isLoading, setIsLoading] = useState(false);
-    const [hasMoreData, setHasMoreData] = useState(true); // 더 이상 데이터가 없을 경우를 처리하기 위한 상태
+    const [hasMoreData, setHasMoreData] = useState(true);
 
     const fetchData = async () => {
         if (isLoading || !hasMoreData) return;
@@ -26,9 +28,20 @@ const AlarmListScreen = ({ navigation }) => {
         setIsLoading(true);
 
         try {
+            const credentials = await Keychain.getGenericPassword();
+            if (!credentials) {
+                console.error('인증 토큰이 없습니다.');
+                return;
+            }
+            const accessToken = credentials.password;
+
             // 서버에서 데이터 요청
-            const response = await axios.get(`${REACT_APP_API_KEY}/api`, {
-                params: { page: page - 1, size: PAGE_SIZE }
+            const response = await axios.get(`${REACT_APP_API_KEY}/alerts/selected-types`, {
+                params: {
+                    page: page,
+                    size: PAGE_SIZE
+                },
+                headers: { 'Authorization': `Bearer ${accessToken}` }
             });
 
             const newData = response.data;
@@ -49,11 +62,11 @@ const AlarmListScreen = ({ navigation }) => {
         fetchData();
     }, []);
 
-    // renderItem 수정: 서버에서 받아온 데이터를 렌더링
     const renderItem = ({ item }) => (
         <View style={styles.item}>
-            <Text style={styles.itemText}>{item.title}</Text>
-            <Text style={styles.message}>{item.message}</Text>
+            <Text style={styles.itemText}>{item.message}</Text>
+            <Text style={styles.message}>타입: {item.alertType}</Text>
+            <Text style={styles.message}>날짜: {new Date(item.createdAt).toLocaleString()}</Text>
         </View>
     );
 
@@ -72,19 +85,20 @@ const AlarmListScreen = ({ navigation }) => {
                     <Image source={require('../assets/images/bell-yellow.png')} style={styles.bellIcon} />
                 </View>
             </View>
+
             <View style={[styles.test, styles.shadowProp]}>
                 {/* 리스트를 감싸는 View */}
                 <FlatList
                     data={listData}
                     renderItem={renderItem}
-                    keyExtractor={(item, index) => index.toString()}
+                    keyExtractor={(item) => item.alertId.toString()}
                     onEndReached={handleLoadMore}
                     onEndReachedThreshold={0.5}
                     ListFooterComponent={
                         isLoading ? (
                             <ActivityIndicator size="large" color="#000" />
                         ) : !hasMoreData ? (
-                            <Text style={styles.endText}>더이상 알림이 없습니다.</Text>
+                            <Text style={styles.endText}>더 이상 알림이 없습니다.</Text>
                         ) : null
                     }
                 />
@@ -115,7 +129,7 @@ const styles = StyleSheet.create({
         padding: 5,
         backgroundColor: '#ffffff',
         width: '86%', // 크기를 명확하게 설정
-        height: '74%', // 높이도 설정
+        height: '80%', // 높이도 설정
         borderRadius: 10,
     },
     shadowProp: {
@@ -163,14 +177,13 @@ const styles = StyleSheet.create({
         borderBottomColor: '#ccc', // 구분선 색상
         width: '100%',
         alignSelf: 'center',
-        fontWeight: 'bold',
     },
     message: {
         fontSize: 16,
-        // fontWeight: 'bold',
+        color: '#666',
     },
     itemText: {
-        fontSize: 20,
+        fontSize: 18,
         color: '#333',
         marginBottom: 5,
     },
