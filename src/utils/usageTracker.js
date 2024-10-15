@@ -13,11 +13,10 @@ let lastPostTime = null;
 let totalScreenOffTime = 0;
 
 // 시간 관련 상수 (밀리초 단위)
-const INITIAL_POST_DELAY =  1000; // 초기 30분 대기
-const POST_INTERVAL = 1000; // 30분마다 데이터 전송
-const CHECK_INTERVAL =  1000; // 30초마다 화면 상태 확인
+const INITIAL_POST_DELAY = 30 * 60 * 1000; // 초기 30분 대기
+const POST_INTERVAL = 30 * 60 * 1000; // 30분마다 데이터 전송
+const CHECK_INTERVAL = 30 * 1000; // 30초마다 화면 상태 확인
 const TWELVE_HOURS = 12 * 60 * 60 * 1000; // 12시간
-
 
 // 사용 추적 설정 함수
 export const setupUsageTracking = () => {
@@ -167,7 +166,7 @@ const sendSms = async () => {
         console.log("관리자 연락처", memberInfo.adminPhone);
         const guardianPh = memberInfo.guardianPhone.replaceAll("-", "") ;
         const adminPh = memberInfo.adminPhone.replaceAll("-", "");
-    
+
 
     const smsBody =  `${memberInfo.name}님의 핸드폰 미사용시간이 12시간이 되었습니다.\n즉시 연락 바랍니다.\n -이음-`;
 
@@ -183,7 +182,7 @@ const sendSms = async () => {
 
     const smsResponse = await axios.post(`${REACT_APP_API_KEY}/send-sms`,
         smsRequest,
-        
+
     );
 
     if (smsResponse.status === 200) { // 응답이 성공적인지 확인
