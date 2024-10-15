@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet, SafeAreaView, Platform, Dimensions, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, Image, StyleSheet, SafeAreaView, Platform, Dimensions, ActivityIndicator, AppState } from 'react-native';
 import FontAwesomeIcons from 'react-native-vector-icons/FontAwesome';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import HelpRequestModal from '../components/HelpRequestModal';
 import axios from 'axios';
 import { REACT_APP_API_KEY } from '@env';
 import * as Keychain from 'react-native-keychain';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import eventEmitter from '../utils/EventEmitter';
-import { requestUserPermission, getFcmToken, initializeNotifee, setupFcmListeners, getNotificationCount, resetNotificationCount } from '../utils/fcmUtils';
+import { requestUserPermission, getFcmToken, initializeNotifee, setupFcmListeners } from '../utils/fcmUtils';
 
 const { width: windowWidth, height: windowHeight } = Dimensions.get('window');
 
@@ -17,14 +18,39 @@ const MainScreen = ({ navigation }) => {
     const [loading, setLoading] = useState(true);
     const [notificationCount, setNotificationCount] = useState(0);
 
-    // 알림 카운트 업데이트 함수
     const updateNotificationCount = useCallback(async () => {
-        const count = await getNotificationCount();
-        setNotificationCount(count);
+        try {
+            const count = await AsyncStorage.getItem('notificationCount');
+            setNotificationCount(Number(count) || 0);
+        } catch (error) {
+            console.error('알림 카운트 가져오기 실패:', error);
+        }
+    }, []);
+
+    const incrementNotificationCount = useCallback(async () => {
+        try {
+            const currentCount = await AsyncStorage.getItem('notificationCount');
+            const newCount = (Number(currentCount) || 0) + 1;
+            await AsyncStorage.setItem('notificationCount', newCount.toString());
+            // 백그라운드에서만 카운트를 증가시키므로 여기서 setNotificationCount를 호출하지 않습니다.
+        } catch (error) {
+            console.error('알림 카운트 증가 실패:', error);
+        }
+    }, []);
+
+    const resetNotificationCount = useCallback(async () => {
+        try {
+            await AsyncStorage.setItem('notificationCount', '0');
+            setNotificationCount(0);
+        } catch (error) {
+            console.error('알림 카운트 리셋 실패:', error);
+        }
     }, []);
 
     useEffect(() => {
-        // 앱 초기화 함수
+        let isMounted = true;
+        let appStateListener = null;
+
         const initializeApp = async () => {
             try {
                 const hasPermission = await requestUserPermission();
@@ -35,32 +61,37 @@ const MainScreen = ({ navigation }) => {
                         console.log("FCM 토큰:", token);
                         await updateFcmToken(token);
                     }
-                    setupFcmListeners(navigation);
+                    setupFcmListeners(navigation, incrementNotificationCount);
                 }
-                await fetchUserData();
-                await updateNotificationCount();
+                if (isMounted) {
+                    await fetchUserData();
+                    await updateNotificationCount();
+                }
             } catch (error) {
                 console.error('앱 초기화 중 오류:', error);
             } finally {
-                setLoading(false);
+                if (isMounted) {
+                    setLoading(false);
+                }
             }
         };
 
         initializeApp();
 
-        // 알림 카운트 업데이트 리스너
-        const notificationCountListener = eventEmitter.addListener(
-            'notificationCountUpdated',
-            updateNotificationCount
-        );
+        appStateListener = AppState.addEventListener('change', (nextAppState) => {
+            if (nextAppState === 'active') {
+                updateNotificationCount();
+            }
+        });
 
-        // 컴포넌트 언마운트 시 리스너 제거
         return () => {
-            notificationCountListener.remove();
+            isMounted = false;
+            if (appStateListener && typeof appStateListener.remove === 'function') {
+                appStateListener.remove();
+            }
         };
-    }, [navigation, updateNotificationCount]);
+    }, [navigation, updateNotificationCount, incrementNotificationCount]);
 
-    // 사용자 데이터 가져오기
     const fetchUserData = async () => {
         try {
             const credentials = await Keychain.getGenericPassword();
@@ -83,7 +114,6 @@ const MainScreen = ({ navigation }) => {
         }
     };
 
-    // FCM 토큰 업데이트
     const updateFcmToken = async (fcmToken) => {
         try {
             const credentials = await Keychain.getGenericPassword();
@@ -106,16 +136,13 @@ const MainScreen = ({ navigation }) => {
         }
     };
 
-    // 도움 요청 처리
     const handleHelpRequest = () => {
         setModalVisible(false);
         console.log('도움이 요청되었습니다.');
     };
 
-    // 알림 카운트 리셋
     const handleResetNotificationCount = async () => {
         await resetNotificationCount();
-        setNotificationCount(0);
     };
 
     if (loading) {
@@ -128,7 +155,6 @@ const MainScreen = ({ navigation }) => {
 
     return (
         <SafeAreaView style={styles.container}>
-            {/* 헤더 */}
             <View style={styles.header}>
                 <TouchableOpacity
                     style={styles.notificationButton}
@@ -146,7 +172,6 @@ const MainScreen = ({ navigation }) => {
                 </TouchableOpacity>
             </View>
 
-            {/* 사용자 정보 */}
             <View style={styles.userInfo}>
                 <View style={styles.userNameContainer}>
                     <Text style={styles.userName}>{userData?.name || '사용자'}</Text>
@@ -155,13 +180,11 @@ const MainScreen = ({ navigation }) => {
                 <Image source={require('../assets/images/appIcon.png')} style={styles.icon} />
             </View>
 
-            {/* 보호자 정보 */}
             <View style={[styles.guardianInfo, styles.shadowProp]}>
                 <Text style={styles.guardianInfoText}>보호자: {userData?.guardianName || '정보 없음'}</Text>
                 <Text style={styles.guardianInfoText}>담당자: {userData?.adminName || '정보 없음'}</Text>
             </View>
 
-            {/* 도움 요청 버튼 */}
             <View style={styles.helpButtonContainer}>
                 <TouchableOpacity
                     style={[styles.helpButton, styles.shadowProp]}
@@ -181,14 +204,12 @@ const MainScreen = ({ navigation }) => {
                 </TouchableOpacity>
             </View>
 
-            {/* 도움 요청 모달 */}
             <HelpRequestModal
                 visible={modalVisible}
                 onClose={() => setModalVisible(false)}
                 onRequestHelp={handleHelpRequest}
             />
 
-            {/* 하단 버튼들 */}
             <View style={styles.rowButtonContainer}>
                 <TouchableOpacity style={[styles.rowButton, styles.shadowProp]} onPress={() => navigation.navigate('MedicationTime')}>
                     <View style={styles.buttonContent}>
@@ -214,7 +235,6 @@ const MainScreen = ({ navigation }) => {
                 </TouchableOpacity>
             </View>
 
-            {/* 알림 내역 조회 버튼 */}
             <View style={styles.alarmHistoryContainer}>
                 <TouchableOpacity
                     style={[styles.alarmHistoryButton, styles.shadowProp]}
