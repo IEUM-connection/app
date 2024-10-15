@@ -2,7 +2,12 @@ import React, { useEffect, useState, useRef } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { requestExactAlarmPermission, initializePushNotifications, requestNotificationPermission } from './src/utils/alarmUtils';
+import {
+    requestExactAlarmPermission,
+    initializePushNotifications,
+    requestNotificationPermission,
+    initializePermissions,
+} from './src/utils/alarmUtils';
 import { setupUsageTracking, stopUsageTracking } from './src/utils/usageTracker';
 import * as fcmUtils from './src/utils/fcmUtils';
 
@@ -35,6 +40,7 @@ const App = () => {
 
                 // 기존 초기화 작업
                 await initializePushNotifications();
+                await initializePermissions();
                 await requestExactAlarmPermission();
                 await requestNotificationPermission();
                 await setupUsageTracking();

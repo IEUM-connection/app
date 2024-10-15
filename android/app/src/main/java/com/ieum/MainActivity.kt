@@ -17,22 +17,23 @@ import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
 import com.facebook.react.defaults.DefaultReactActivityDelegate
-import com.meetbti.ieum.TokenPackage
 
 class MainActivity : ReactActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d("MainActivity", "MainActivity onCreate 호출됨")
-        // 초기화 작업 수행 (필요한 경우)
-    }
-
-    override fun onResume() {
-        super.onResume()
-        Log.d("MainActivity", "MainActivity onResume 호출됨")
-        // 권한 체크 및 요청
+        // 권한 체크 및 요청을 onCreate에서 호출
         checkPermissions()
     }
+
+    // onResume()에서 권한 체크 함수 호출 제거
+    // override fun onResume() {
+    //     super.onResume()
+    //     Log.d("MainActivity", "MainActivity onResume 호출됨")
+    //     // 권한 체크 및 요청 제거
+    //     // checkPermissions()
+    // }
 
     private fun checkPermissions() {
         Log.d("PermissionCheck", "권한 체크 시작")
@@ -46,12 +47,12 @@ class MainActivity : ReactActivity() {
             permissionsNeeded.add(Manifest.permission.ACTIVITY_RECOGNITION)
         }
 
-        // Android 13 이상에서 POST_NOTIFICATIONS 권한 추가 요청
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                permissionsNeeded.add(Manifest.permission.POST_NOTIFICATIONS)
-            }
-        }
+        // POST_NOTIFICATIONS 권한 요청 제거
+        // if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        //     if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+        //         permissionsNeeded.add(Manifest.permission.POST_NOTIFICATIONS)
+        //     }
+        // }
 
         if (permissionsNeeded.isNotEmpty()) {
             Log.d("PermissionCheck", "권한 요청 필요: $permissionsNeeded")

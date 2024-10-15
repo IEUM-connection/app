@@ -1,7 +1,7 @@
 // alarmUtils.js
 
 import PushNotification from 'react-native-push-notification';
-import { Alert, Platform, PushNotificationIOS } from 'react-native';
+import { Alert, Platform, PushNotificationIOS, Linking } from 'react-native';
 import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 import { NativeModules } from 'react-native';
 
@@ -89,6 +89,13 @@ const showPermissionAlert = (permissionType) => {
         ],
         { cancelable: true }
     );
+};
+
+// 모든 권한 요청을 순차적으로 처리하는 함수
+export const initializePermissions = async () => {
+    await requestNotificationPermission();
+    await requestExactAlarmPermission();
+    // 필요한 다른 권한 요청 추가 가능
 };
 
 // PushNotification 초기화 및 권한 설정

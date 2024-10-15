@@ -10,7 +10,6 @@ import {
     Image,
 } from 'react-native';
 import axios from 'axios';
-import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
 import { REACT_APP_API_KEY } from '@env';
 import * as Keychain from 'react-native-keychain';
 

@@ -1,54 +1,28 @@
 import messaging from '@react-native-firebase/messaging';
-import { Alert, Platform } from 'react-native';
 import notifee, { AndroidImportance, EventType } from '@notifee/react-native';
-import axios from 'axios';
-import {REACT_APP_API_KEY} from '@env';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import eventEmitter from './EventEmitter';
 
+// 사용자에게 푸시 알림 권한 요청
 export const requestUserPermission = async () => {
     const authStatus = await messaging().requestPermission();
-    const enabled =
-        authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+    return authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
         authStatus === messaging.AuthorizationStatus.PROVISIONAL;
-
-    if (enabled) {
-        console.log('Authorization status:', authStatus);
-    }
 };
 
+// FCM 토큰 가져오기
 export const getFcmToken = async () => {
     try {
-        const token = await messaging().getToken();
-        if (token) {
-            console.log("Your Firebase Token is:", token);
-            return token;
-        } else {
-            console.log("Failed to get token");
-            return null;
-        }
+        return await messaging().getToken();
     } catch (error) {
-        console.error("Error getting FCM token:", error);
+        console.error("FCM 토큰 가져오기 오류:", error);
         return null;
     }
 };
 
-export const registerFcmTokenWithServer = async (userId) => {
-    try {
-        const token = await getFcmToken();
-        if (token) {
-            const response = await axios.post(`${REACT_APP_API_KEY}/register-fcm-token`, {
-                userId: userId,
-                fcmToken: token
-            });
-            console.log('FCM token registered with server:', response.data);
-        }
-    } catch (error) {
-        console.error('Error registering FCM token with server:', error);
-    }
-};
-
+// Notifee 초기화 및 채널 생성
 export const initializeNotifee = async () => {
     await notifee.requestPermission();
-
     await notifee.createChannel({
         id: 'default',
         name: 'Default Channel',
@@ -56,37 +30,30 @@ export const initializeNotifee = async () => {
     });
 };
 
-export const handleForegroundMessage = async (remoteMessage) => {
-    console.log('Foreground message received:', remoteMessage);
+// 알림 카운트 증가
+export const incrementNotificationCount = async (isBackground = false) => {
+    try {
+        const currentCount = await AsyncStorage.getItem('notificationCount') || '0';
+        const newCount = parseInt(currentCount) + 1;
+        await AsyncStorage.setItem('notificationCount', newCount.toString());
 
-    const title = remoteMessage.data?.title || remoteMessage.notification?.title || 'New Notification';
-    const body = remoteMessage.data?.body || remoteMessage.notification?.body || 'You have a new message';
-
-    await notifee.displayNotification({
-        title: title,
-        body: body,
-        android: {
-            channelId: 'default',
-            pressAction: {
-                id: 'default',
-            },
-        },
-    });
-
-    if (remoteMessage.data) {
-        console.log('Notification data:', remoteMessage.data);
+        if (!isBackground) {
+            // 포그라운드에서만 이벤트 발생
+            eventEmitter.emit('notificationCountUpdated', newCount);
+        }
+    } catch (error) {
+        console.error('알림 카운트 증가 오류:', error);
     }
 };
 
-export const handleBackgroundMessage = async (remoteMessage) => {
-    console.log('Handling background message:', remoteMessage);
-
-    const title = remoteMessage.data?.title || remoteMessage.notification?.title || 'New Notification';
-    const body = remoteMessage.data?.body || remoteMessage.notification?.body || 'You have a new message';
+// 알림 표시
+const displayNotification = async (remoteMessage) => {
+    const title = remoteMessage.notification?.title || '새 알림';
+    const body = remoteMessage.notification?.body || '새 메시지가 있습니다';
 
     await notifee.displayNotification({
-        title: title,
-        body: body,
+        title,
+        body,
         android: {
             channelId: 'default',
             pressAction: {
@@ -96,51 +63,65 @@ export const handleBackgroundMessage = async (remoteMessage) => {
     });
 };
 
-export const setupFcmListeners = (navigationRef) => {
-    const unsubscribeForeground = messaging().onMessage(handleForegroundMessage);
+// 포그라운드 메시지 처리
+export const handleForegroundMessage = async (remoteMessage) => {
+    console.log('포그라운드 메시지 수신:', remoteMessage);
+    await displayNotification(remoteMessage);
+    await incrementNotificationCount();
+};
 
-    const unsubscribeBackground = messaging().onNotificationOpenedApp(remoteMessage => {
-        console.log('Notification caused app to open from background state:', remoteMessage);
-        if (navigationRef.current) {
-            if (remoteMessage.data?.screen) {
-                navigationRef.current.navigate(remoteMessage.data.screen);
-            }
+// 백그라운드 메시지 처리
+export const handleBackgroundMessage = async (remoteMessage) => {
+    console.log('백그라운드 메시지 수신:', remoteMessage);
+    await displayNotification(remoteMessage);
+    await incrementNotificationCount(true);
+};
+
+// FCM 리스너 설정
+export const setupFcmListeners = (navigation) => {
+    messaging().onMessage(handleForegroundMessage);
+    messaging().setBackgroundMessageHandler(handleBackgroundMessage);
+
+    messaging().onNotificationOpenedApp(remoteMessage => {
+        console.log('백그라운드 상태에서 알림으로 앱 열림:', remoteMessage);
+        if (remoteMessage.data?.screen) {
+            navigation.navigate(remoteMessage.data.screen);
         }
     });
 
     messaging().getInitialNotification().then(remoteMessage => {
         if (remoteMessage) {
-            console.log('Notification caused app to open from quit state:', remoteMessage);
-            if (navigationRef.current) {
-                if (remoteMessage.data?.screen) {
-                    navigationRef.current.navigate(remoteMessage.data.screen);
-                }
+            console.log('종료 상태에서 알림으로 앱 열림:', remoteMessage);
+            if (remoteMessage.data?.screen) {
+                navigation.navigate(remoteMessage.data.screen);
             }
         }
     });
 
-    return () => {
-        unsubscribeForeground();
-        unsubscribeBackground();
-    };
-};
-
-export const setupBackgroundHandler = () => {
-    messaging().setBackgroundMessageHandler(handleBackgroundMessage);
-
     notifee.onBackgroundEvent(async ({ type, detail }) => {
-        const { notification, pressAction } = detail;
-
-        switch (type) {
-            case EventType.DISMISSED:
-                console.log('User dismissed notification', notification);
-                break;
-            case EventType.PRESS:
-                console.log('User pressed notification', notification);
-                // 여기에 알림을 눌렀을 때의 동작을 추가할 수 있습니다.
-                break;
-            default:
-                console.log('Unknown event type', type);
+        if (type === EventType.PRESS) {
+            console.log('사용자가 알림을 눌렀습니다', detail.notification);
         }
     });
+};
+
+// 현재 알림 카운트 가져오기
+export const getNotificationCount = async () => {
+    try {
+        const count = await AsyncStorage.getItem('notificationCount') || '0';
+        return parseInt(count);
+    } catch (error) {
+        console.error('알림 카운트 가져오기 오류:', error);
+        return 0;
+    }
+};
+
+// 알림 카운트 리셋
+export const resetNotificationCount = async () => {
+    try {
+        await AsyncStorage.setItem('notificationCount', '0');
+        eventEmitter.emit('notificationCountUpdated', 0);
+    } catch (error) {
+        console.error('알림 카운트 리셋 오류:', error);
+    }
 };
