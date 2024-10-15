@@ -5,9 +5,9 @@ import axios from 'axios';
 import { REACT_APP_API_KEY } from '@env';
 import * as Keychain from 'react-native-keychain';
 import { NativeModules } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage'; // AsyncStorage 임포트
+import auth from '@react-native-firebase/auth';
 
-const { TokenModule } = NativeModules; // Native Module 가져오기
+const { TokenModule } = NativeModules;
 
 const { width: windowWidth, height: windowHeight } = Dimensions.get('window');
 
@@ -16,47 +16,40 @@ const LoginScreen = ({ navigation }) => {
     const fadeAnim = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
-        // 자동 로그인 체크
-        const checkUserCode = async () => {
-            try {
-                const storedUserCode = await AsyncStorage.getItem('userCode');
-                if (storedUserCode !== null) {
-                    // 사용자 코드가 존재하면 메인 화면으로 이동
-                    navigation.replace('Main');
-                }
-            } catch (error) {
-                console.error('Failed to fetch user code from AsyncStorage:', error);
-            }
-        };
-        checkUserCode();
+        checkAutoLogin();
+        animateImage();
     }, []);
 
-    useEffect(() => {
+    const checkAutoLogin = async () => {
+        try {
+            const token = await Keychain.getGenericPassword();
+            if (token) {
+                // 토큰이 존재하면 자동 로그인 처리
+                await auth().signInAnonymously(); // Firebase 익명 로그인
+                navigation.replace('Main');
+            }
+        } catch (error) {
+            console.error('Auto login check failed:', error);
+        }
+    };
+
+    const animateImage = () => {
         Animated.timing(fadeAnim, {
             toValue: 1,
             duration: 1000,
             useNativeDriver: true,
         }).start();
-    }, [fadeAnim]);
+    };
 
     const saveToKeychain = async (accessToken) => {
         try {
-
-            // Keychain에 Access Token 저장
-            Keychain.setGenericPassword('token', accessToken);
+            await Keychain.setGenericPassword('token', accessToken);
             console.log('Access token saved successfully to Keychain');
 
-            // EncryptedSharedPreferences에 Access Token 저장 via Native Module
-            TokenModule.saveAccessToken(accessToken)
-                .then(() => {
-                    console.log('Access token saved successfully to EncryptedSharedPreferences');
-                })
-                .catch((error) => {
-                    console.error('Error saving access token to EncryptedSharedPreferences:', error);
-                });
-
+            await TokenModule.saveAccessToken(accessToken);
+            console.log('Access token saved successfully to EncryptedSharedPreferences');
         } catch (error) {
-            console.error('Error saving to Keychain:', error);
+            console.error('Error saving access token:', error);
         }
     };
 
@@ -73,47 +66,26 @@ const LoginScreen = ({ navigation }) => {
                 headers: {
                     'loginType': 'member',
                 },
-                validateStatus: function (status) {
-                    return status >= 200 && status < 300;
-                },
             });
 
-
             console.log('로그인 성공:', response.data);
-            console.log('응답 헤더:', response.headers);
 
-            // 헤더에서 토큰 찾기
-            const accessToken = response.headers['authorization']
+            const accessToken = response.headers['authorization'];
 
             if (accessToken) {
                 await saveToKeychain(accessToken);
                 console.log('인증 토큰이 키체인에 저장되었습니다.');
-                console.log(accessToken)
+
+                // Firebase에 익명 로그인 (자동 로그인 용도)
+                await auth().signInAnonymously();
+
+                navigation.replace('Main');
             } else {
                 console.warn('로그인 응답에서 인증 토큰을 찾을 수 없습니다.');
-                console.log('전체 응답:', response);
             }
-
-            // AsyncStorage에 userCode 저장
-            await AsyncStorage.setItem('userCode', memberCode);
-
-            // 메인 화면으로 이동
-            navigation.replace('Main');
         } catch (error) {
             console.error('로그인 실패:', error);
-            if (error.response) {
-                // 서버가 2xx 범위를 벗어나는 상태 코드로 응답한 경우
-                console.error('응답 데이터:', error.response.data);
-                console.error('응답 상태:', error.response.status);
-                console.error('응답 헤더:', error.response.headers);
-            } else if (error.request) {
-                // 요청이 이루어졌으나 응답을 받지 못한 경우
-                console.error('요청:', error.request);
-            } else {
-                // 요청을 설정하는 중에 문제가 발생한 경우
-                console.error('에러 메시지:', error.message);
-            }
-            Alert.alert('로그인 실패', '서버에 연결할 수 없습니다. 네트워크 연결을 확인해주세요.');
+            Alert.alert('로그인 실패', '인증에 실패했습니다. 다시 시도해주세요.');
         }
     };
 
