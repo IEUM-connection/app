@@ -20,9 +20,13 @@ import NearbyMedicalFacilitiesScreen from './src/screens/NearbyMedicalFacilities
 import MedicationTimeScreen from './src/screens/MedicationTimeScreen';
 import AddMedicationTimeScreen from './src/screens/AddMedicationTimeScreen';
 import EditMedicationTimeScreen from './src/screens/EditMedicationTimeScreen';
+import {LogBox} from 'react-native';
 
 const Stack = createStackNavigator(); // 스택 네비게이터 생성
-
+LogBox.ignoreLogs([
+    '`new NativeEventEmitter()` was called with a non-null argument without the required `addListener` method.',
+    '`new NativeEventEmitter()` was called with a non-null argument without the required `removeListeners` method.',
+]);
 const App = () => {
     const [isLoading, setIsLoading] = useState(true); // 로딩 상태 관리
     const [fcmToken, setFcmToken] = useState(null); // FCM 토큰 상태 관리
