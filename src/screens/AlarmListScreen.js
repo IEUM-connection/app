@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
         shadowColor: '#000',
         borderBottomWidth: 1, // 구분선 두께
         borderBottomColor: '#ccc', // 구분선 색상
-        width: '100%',
+        width: 300,
         alignSelf: 'center',
     },
     message: {
