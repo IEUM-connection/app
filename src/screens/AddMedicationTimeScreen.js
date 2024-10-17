@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Text, View, StyleSheet, TouchableOpacity, ScrollView, Platform } from 'react-native';
+import { Text, View, StyleSheet, TouchableOpacity, ScrollView, Platform, Alert } from 'react-native'; // Alert 추가
 import SimpleLineIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { Picker } from '@react-native-picker/picker';
 
@@ -36,6 +36,15 @@ const AddMedicationTimeScreen = ({ navigation }) => {
     };
 
     const saveMedication = () => {
+        if (selectedDays.length === 0) {
+            Alert.alert(
+                '요일 선택 필요',
+                '알림을 설정하기 위해 적어도 하나의 요일을 선택해주세요.',
+                [{ text: '확인' }]
+            );
+            return; // 저장 중단
+        }
+
         const alarmTime = new Date();
         alarmTime.setHours(hour);
         alarmTime.setMinutes(minute);
@@ -46,7 +55,7 @@ const AddMedicationTimeScreen = ({ navigation }) => {
             timing: medicationTiming,
             days: selectedDays,
             time: `${hour}:${minute}`,
-            alarmTime: alarmTime.getTime()  // timestamp로 변환하여 저장
+            alarmTime: alarmTime.getTime()
         };
 
         navigation.navigate('MedicationTime', { newAlarm });
@@ -62,50 +71,47 @@ const AddMedicationTimeScreen = ({ navigation }) => {
             </View>
             <View style={styles.contentContainer}>
                 <Text style={styles.Title}>투약 시간 등록</Text>
-            <View style={styles.section}>
-                <Text style={styles.sectionTitle}>투약 정보</Text>
-                <View style={styles.itemContainer}>
-                    <View style={styles.itemRow}>
-                        <TouchableOpacity
-                            style={[styles.checkbox, medicationTiming === '식전' && styles.checkedBox]}
-                            onPress={() => setMedicationTiming('식전')}
-                        >
-                            {medicationTiming === '식전' && <SimpleLineIcons name="check" size={20} color="#fff" />}
-                        </TouchableOpacity>
-                        <Text style={styles.itemText}>식전</Text>
-                    </View>
-                    <View style={styles.itemRow}>
-                        <TouchableOpacity
-                            style={[styles.checkbox, medicationTiming === '식후' && styles.checkedBox]}
-                            onPress={() => setMedicationTiming('식후')}
-                        >
-                            {medicationTiming === '식후' && <SimpleLineIcons name="check" size={20} color="#fff" />}
-                        </TouchableOpacity>
-                        <Text style={styles.itemText}>식후</Text>
-                    </View>
-                </View>
-            </View>
-
-            <View style={styles.section}>
-                <Text style={styles.sectionTitle1}>투약 요일</Text>
-                <View style={styles.daysContainer}>
-                    {days.map((dayPair, index) => (
-                        <View key={index} style={styles.dayPairContainer}>
-                            {dayPair.map(day => (
-                                <View key={day} style={styles.itemRow}>
-                                    <TouchableOpacity
-                                        style={[styles.checkbox, (selectedDays.includes(day) || (day === '매일' && selectedDays.length === 7)) && styles.checkedBox]}
-                                        onPress={() => toggleDay(day)}
-                                    >
-                                        {(selectedDays.includes(day) || (day === '매일' && selectedDays.length === 7)) && <SimpleLineIcons name="check" size={20} color="#fff" />}
-                                    </TouchableOpacity>
-                                    <Text style={styles.itemText}>{day}</Text>
-                                </View>
-                            ))}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>투약 정보</Text>
+                    <View style={styles.itemContainer}>
+                        <View style={styles.itemRow}>
+                            <TouchableOpacity
+                                style={[styles.checkbox, medicationTiming === '식전' && styles.checkedBox]}
+                                onPress={() => setMedicationTiming('식전')}
+                            >
+                                {medicationTiming === '식전' && <SimpleLineIcons name="check" size={20} color="#fff" />}
+                            </TouchableOpacity>
+                            <Text style={styles.itemText}>식전</Text>
                         </View>
-                    ))}
+                        <View style={styles.itemRow}>
+                            <TouchableOpacity
+                                style={[styles.checkbox, medicationTiming === '식후' && styles.checkedBox]}
+                                onPress={() => setMedicationTiming('식후')}
+                            >
+                                {medicationTiming === '식후' && <SimpleLineIcons name="check" size={20} color="#fff" />}
+                            </TouchableOpacity>
+                            <Text style={styles.itemText}>식후</Text>
+                        </View>
+                    </View>
                 </View>
-            </View>
+
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle1}>투약 요일</Text>
+                    <View style={styles.daysContainer}>
+                        {days.map((dayPair, index) => (
+                            <View key={index} style={styles.dayPairContainer}>
+                                {dayPair.map(day => (
+                                    <TouchableOpacity key={day} style={styles.itemRow} onPress={() => toggleDay(day)}>
+                                        <View style={[styles.checkbox, (selectedDays.includes(day) || (day === '매일' && selectedDays.length === 7)) && styles.checkedBox]}>
+                                            {(selectedDays.includes(day) || (day === '매일' && selectedDays.length === 7)) && <SimpleLineIcons name="check" size={20} color="#fff" />}
+                                        </View>
+                                        <Text style={styles.itemText}>{day}</Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                        ))}
+                    </View>
+                </View>
                 <Text style={styles.sectionTitle2}>투약 시간</Text>
                 <View style={styles.timeContainer}>
                     <Picker
